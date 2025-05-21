@@ -59,7 +59,7 @@ export default async function ExplorePage({
         try {
           // Parse S3 URI (e.g. s3://my-bucket/path/to/dataset)
           const [bucket, ...keyParts] = s3Dir.split('/');
-          const repoId = `${bucket}/${keyParts.join('_')}`;
+          const repoId = `${bucket}/${keyParts.join('~')}`;
           const keyPrefix = keyParts.join('/').replace(/\/$/, '');
 
           // ------- meta/info.json -------

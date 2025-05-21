@@ -6,6 +6,8 @@ import {
   readParquetColumn,
 } from "@/utils/parquetUtils";
 import { pick } from "@/utils/pick";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const DATASET_URL =
   process.env.DATASET_URL || "https://huggingface.co/datasets";
@@ -17,10 +19,19 @@ export async function getEpisodeData(
   dataset: string,
   episodeId: number,
 ) {
-  const repoId = `${org}/${dataset}`;
+  const repoId = `${org}/${dataset}`.replace(/~/g, "/");
+  const [bucket, ...prefixParts] = repoId.split("/");
+  const keyPrefix = prefixParts.join("/").replace(/\/$/, "");
+  const s3Client = new S3Client({ region: "us-east-2" });
+
+  const getSignedS3Url = async (key: string) => {
+    const command = new GetObjectCommand({ Bucket: bucket, Key: `${keyPrefix}/${key}` });
+    return getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  };
+
   try {
     const episode_chunk = Math.floor(0 / 1000);
-    const jsonUrl = `${DATASET_URL}/${repoId}/resolve/main/meta/info.json`;
+    const jsonUrl = await getSignedS3Url("meta/info.json");
 
     const info = await fetchJson<DatasetMetadata>(jsonUrl);
 
@@ -42,7 +53,7 @@ export async function getEpisodeData(
     // Videos information
     const videosInfo = Object.entries(info.features)
       .filter(([key, value]) => value.dtype === "video")
-      .map(([key, _]) => {
+      .map(async ([key, _]) => {
         const videoPath = formatStringWithVars(info.video_path, {
           video_key: key,
           episode_chunk: episode_chunk.toString().padStart(3, "0"),
@@ -50,9 +61,11 @@ export async function getEpisodeData(
         });
         return {
           filename: key,
-          url: `${DATASET_URL}/${repoId}/resolve/main/` + videoPath,
+          url: await getSignedS3Url(videoPath),
         };
       });
+    // videosInfo is now array of promises, resolve them
+    const resolvedVideosInfo = await Promise.all(videosInfo);
 
     // Column data
     const columnNames = Object.entries(info.features)
@@ -96,12 +109,12 @@ export async function getEpisodeData(
       };
     });
 
-    const parquetUrl =
-      `${DATASET_URL}/${repoId}/resolve/main/` +
-      formatStringWithVars(info.data_path, {
-        episode_chunk: episode_chunk.toString().padStart(3, "0"),
-        episode_index: episodeId.toString().padStart(6, "0"),
-      });
+    const parquetKey = formatStringWithVars(info.data_path, {
+      episode_chunk: episode_chunk.toString().padStart(3, "0"),
+      episode_index: episodeId.toString().padStart(6, "0"),
+    });
+
+    const parquetUrl = await getSignedS3Url(parquetKey);
 
     const arrayBuffer = await fetchParquetFile(parquetUrl);
     const data = await readParquetColumn(arrayBuffer, filteredColumnNames);
@@ -202,7 +215,7 @@ export async function getEpisodeData(
     return {
       datasetInfo,
       episodeId: episodeId + 1,
-      videosInfo,
+      videosInfo: resolvedVideosInfo,
       chartDataGroups,
       episodes,
       ignoredColumns,
