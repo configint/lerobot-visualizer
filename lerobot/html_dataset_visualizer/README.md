@@ -28,6 +28,18 @@ This tool is designed to help robotics researchers and practitioners quickly ins
 
 ## Getting Started
 
+For node and npm installation:
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc  # or ~/.zshrc, depending on your shell
+nvm install 18  # or 20
+nvm use 18
+node -v   # e.g., v18.20.0
+npm -v    # e.g., 9.x or 10.x
+npm install next
+npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
 First, run the development server:
 
 ```bash
