@@ -10,7 +10,7 @@ applications:
           commands:
             - npm run build
       artifacts:
-        baseDirectory: lerobot/html_dataset_visualizer
+        baseDirectory: lerobot/html_dataset_visualizer/.next
         files:
           - '**/*'
       cache:
