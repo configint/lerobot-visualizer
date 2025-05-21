@@ -58,13 +58,9 @@ export default async function ExplorePage({
       datasets.map(async (s3Dir: string) => {
         try {
           // Parse S3 URI (e.g. s3://my-bucket/path/to/dataset)
-          const match = s3Dir.match(/^s3:\/\/([^/]+)\/(.+)$/);
-          if (!match) throw new Error(`Invalid S3 URI: ${s3Dir}`);
-          const bucket = match[1];
-          const keyPrefix = match[2].replace(/\/$/, ""); // trim trailing slash
-
-          // repoId is the last folder name of the prefix
-          const repoId = keyPrefix.split("/").pop()!;
+          const [bucket, ...keyParts] = s3Dir.split('/');
+          const repoId = `${bucket}/${keyParts.join('_')}`;
+          const keyPrefix = keyParts.join('/').replace(/\/$/, '');
 
           // ------- meta/info.json -------
           const infoKey = `${keyPrefix}/meta/info.json`;
