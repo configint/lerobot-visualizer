@@ -20,22 +20,36 @@ export default async function ExplorePage({
   let currentPage = 1;
   let totalPages = 1;
   try {
-    // --- Fetch dataset list from DynamoDB ---
+    // --- Fetch dataset list from DynamoDB (both data-builder and lerobot-visualizer) ---
     const ddbClient = new DynamoDBClient({ region: "us-east-2" });
     const docClient = DynamoDBDocumentClient.from(ddbClient);
 
-    const scanRes = await docClient.send(
+    const scanBuilder = await docClient.send(
       new ScanCommand({
         TableName: "data-builder",
         ProjectionExpression: "version, data_name",
       }),
     );
 
-    const allDatasets: string[] =
-      (scanRes.Items || []).map(
+    const builderDatasets: string[] =
+      (scanBuilder.Items || []).map(
         (item: { version: string; data_name: string }) =>
           `configint/data-builder/${item.version}/data/${item.data_name}/`,
       );
+
+    const scanVisualizer = await docClient.send(
+      new ScanCommand({
+        TableName: "lerobot-visualizer",
+        ProjectionExpression: "s3_dir",
+      }),
+    );
+
+    const visualizerDatasets: string[] =
+      (scanVisualizer.Items || []).map(
+        (item: { s3_dir: string }) => item.s3_dir,
+      );
+
+    const allDatasets = [...builderDatasets, ...visualizerDatasets];
 
     // Use searchParams from props
     const page = parseInt(searchParams?.p || "1", 10);
