@@ -26,14 +26,15 @@ export default async function ExplorePage({
 
     const scanRes = await docClient.send(
       new ScanCommand({
-        TableName: process.env.DYNAMO_TABLE_NAME || "lerobot-visualizer",
-        ProjectionExpression: "s3_dir",
+        TableName: "data-builder",
+        ProjectionExpression: "version, data_name",
       }),
     );
 
     const allDatasets: string[] =
       (scanRes.Items || []).map(
-        (item: { s3_dir: string }) => item.s3_dir,
+        (item: { version: string; data_name: string }) =>
+          `configint/data-builder/${item.version}/data/${item.data_name}/`,
       );
 
     // Use searchParams from props
