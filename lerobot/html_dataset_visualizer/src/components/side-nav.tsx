@@ -33,8 +33,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   React.useEffect(() => {
     if (!sidebarVisible) return;
     function handleClickOutside(event: MouseEvent) {
-      // If click is outside the sidebar nav
       if (
+        window.innerWidth < 768 &&
         sidebarRef.current &&
         !sidebarRef.current.contains(event.target as Node)
       ) {
