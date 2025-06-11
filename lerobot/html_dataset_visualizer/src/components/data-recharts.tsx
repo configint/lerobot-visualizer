@@ -33,14 +33,15 @@ export const DataRecharts = React.memo(
     }, [onChartsReady]);
 
     return (
-      <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+      <div className="flex gap-4 overflow-x-auto pb-4">
         {data.map((group, idx) => (
-          <SingleDataGraph
-            key={idx}
-            data={group}
-            hoveredTime={hoveredTime}
-            setHoveredTime={setHoveredTime}
-          />
+          <div key={idx} className="flex-shrink-0 min-w-[28rem]">
+            <SingleDataGraph
+              data={group}
+              hoveredTime={hoveredTime}
+              setHoveredTime={setHoveredTime}
+            />
+          </div>
         ))}
       </div>
     );

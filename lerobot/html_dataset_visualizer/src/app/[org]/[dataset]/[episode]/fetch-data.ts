@@ -163,70 +163,22 @@ export async function getEpisodeData(
       )
       .map(([key]) => key);
 
-    // --- Group columns by scale ---
-    // 1. Compute min/max for each column (excluding 'timestamp')
-    const numericKeys = seriesNames.filter((k) => k !== "timestamp");
-    const colStats: Record<string, { min: number; max: number }> = {};
-    numericKeys.forEach((key) => {
-      let min = Infinity,
-        max = -Infinity;
-      for (const row of chartData) {
-        const v = row[key];
-        if (typeof v === "number" && !isNaN(v)) {
-          if (v < min) min = v;
-          if (v > max) max = v;
-        }
-      }
-      colStats[key] = { min, max };
-    });
-
-    // 2. Group columns by similar scale (log10 range, threshold = 1 order of magnitude)
-    const scaleGroups: Record<string, string[]> = {};
-    const used = new Set<string>();
-    const SCALE_THRESHOLD = 2; // log10(max) - log10(min) within 1 order of magnitude
-    for (const key of numericKeys) {
-      if (used.has(key)) continue;
-      const { min, max } = colStats[key];
-      if (!isFinite(min) || !isFinite(max)) continue;
-      const logMin = Math.log10(Math.abs(min) + 1e-9);
-      const logMax = Math.log10(Math.abs(max) + 1e-9);
-      const group: string[] = [key];
-      used.add(key);
-      for (const other of numericKeys) {
-        if (used.has(other) || other === key) continue;
-        const { min: omin, max: omax } = colStats[other];
-        if (!isFinite(omin) || !isFinite(omax) || omin === omax) continue;
-        const ologMin = Math.log10(Math.abs(omin) + 1e-9);
-        const ologMax = Math.log10(Math.abs(omax) + 1e-9);
-        // If both min/max are within threshold, group together
-        if (
-          Math.abs(logMin - ologMin) <= SCALE_THRESHOLD &&
-          Math.abs(logMax - ologMax) <= SCALE_THRESHOLD
-        ) {
-          group.push(other);
-          used.add(other);
-        }
-      }
-      scaleGroups[key] = group;
-    }
-
-    for (const [key, group] of Object.entries(scaleGroups)) {
-      scaleGroups[key] = groupIdenticalSeriesNames(group);
-    }
-
-    // If any group in chartGroups is longer than 6, split into subgroups of max length 6
-    const chartGroups = Object.values(scaleGroups)
-      .sort((a, b) => b.length - a.length)
-      .flatMap((group) => {
-        if (group.length > 6) {
-          const subgroups = [];
-          for (let i = 0; i < group.length; i += 6) {
-            subgroups.push(group.slice(i, i + 6));
-          }
-          return subgroups;
-        }
-        return [group];
-      });
+    // --- Group columns by their base names ---
+    // Each top-level feature becomes a chart. If a feature has multiple
+    // sub-values (e.g. an array), all of those series are shown on the same
+    // chart.
+    const chartGroups = columns
+      .map(({ value }) =>
+        value.length > 6
+          ? value.reduce<string[][]>((acc, name, idx) => {
+              const groupIdx = Math.floor(idx / 6);
+              if (!acc[groupIdx]) acc[groupIdx] = [];
+              acc[groupIdx].push(name);
+              return acc;
+            }, [])
+          : [value],
+      )
+      .flat();
 
     const duration = chartData[chartData.length - 1].timestamp;
 
@@ -264,32 +216,4 @@ export async function getEpisodeDataSafe(
     // Only expose the error message, not stack or sensitive info
     return { error: err?.message || String(err) || "Unknown error" };
   }
-}
-
-function groupIdenticalSeriesNames(seriesNames: string[]): string[] {
-  const seenSuffixes = new Set<string>();
-  const suffixMap = new Map<string, string[]>();
-
-  // Build a map from suffix to all items with that suffix (preserve order)
-  for (const name of seriesNames) {
-    const parts = name.split(SERIES_NAME_DELIMITER);
-    const suffix = parts[1] || "";
-    if (!suffixMap.has(suffix)) {
-      suffixMap.set(suffix, []);
-    }
-    suffixMap.get(suffix)!.push(name);
-  }
-
-  const result: string[] = [];
-  for (const name of seriesNames) {
-    const parts = name.split(SERIES_NAME_DELIMITER);
-    const suffix = parts[1] || "";
-    if (!seenSuffixes.has(suffix)) {
-      // Insert all items with this suffix
-      result.push(...suffixMap.get(suffix)!);
-      seenSuffixes.add(suffix);
-    }
-    // else: already inserted as part of a group, skip
-  }
-  return result;
 }
