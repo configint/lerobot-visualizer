@@ -7,7 +7,11 @@ import {
 } from "@/utils/parquetUtils";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { S3Client, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  HeadObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Server component for data fetching
@@ -31,11 +35,12 @@ export default async function ExplorePage({
       }),
     );
 
-    const builderDatasets: string[] =
-      (scanBuilder.Items || []).map(
-        (item: { version: string; data_name: string }) =>
-          `configint/data-builder/${item.version}/data/${item.data_name}/`,
-      );
+    const builderDatasets = (scanBuilder.Items || []).map(
+      (item: { version: string; data_name: string }) => ({
+        id: `${item.version}/${item.data_name}`,
+        s3_dir: `configint/data-builder/${item.version}/data/${item.data_name}/`,
+      }),
+    );
 
     const scanVisualizer = await docClient.send(
       new ScanCommand({
@@ -44,11 +49,18 @@ export default async function ExplorePage({
       }),
     );
 
-    const visualizerDatasets: string[] =
-      (scanVisualizer.Items || []).map(
-        (item: { s3_dir: string }) => item.s3_dir,
-      );
-
+    const visualizerDatasets = (scanVisualizer.Items || [])
+      .map((item: { s3_dir: string }) => {
+        const match = item.s3_dir.match(
+          /^configint\/data-builder\/(.+)\/data\/(.+)\/$/,
+        );
+        if (!match) return null;
+        return {
+          id: `${match[1]}/${match[2]}`,
+          s3_dir: item.s3_dir,
+        };
+      })
+      .filter(Boolean) as { id: string; s3_dir: string }[];
     const allDatasets = [...builderDatasets, ...visualizerDatasets];
 
     // Use searchParams from props
@@ -70,12 +82,12 @@ export default async function ExplorePage({
   const s3Client = new S3Client({ region: "us-east-2" });
   const datasetWithVideos = (
     await Promise.all(
-      datasets.map(async (s3Dir: string) => {
+      datasets.map(async (ds: { id: string; s3_dir: string }) => {
         try {
+          const { id, s3_dir } = ds;
           // Parse S3 URI (e.g. s3://my-bucket/path/to/dataset)
-          const [bucket, ...keyParts] = s3Dir.split('/');
-          const repoId = `${bucket}/${keyParts.join('~')}`;
-          const keyPrefix = keyParts.join('/').replace(/\/$/, '');
+          const [bucket, ...keyParts] = s3_dir.split("/");
+          const keyPrefix = keyParts.join("/").replace(/\/$/, "");
 
           // ------- meta/info.json -------
           const infoKey = `${keyPrefix}/meta/info.json`;
@@ -120,9 +132,12 @@ export default async function ExplorePage({
             }
           }
 
-          return videoUrl ? { id: repoId, videoUrl } : null;
+          return videoUrl ? { id, videoUrl } : null;
         } catch (err) {
-          console.error(`Failed to fetch or parse dataset info for ${s3Dir}:`, err);
+          console.error(
+            `Failed to fetch or parse dataset info for ${ds.s3_dir}:`,
+            err,
+          );
           return null;
         }
       }),
