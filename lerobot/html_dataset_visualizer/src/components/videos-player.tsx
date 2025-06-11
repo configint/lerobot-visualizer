@@ -281,8 +281,7 @@ export const VideosPlayer = ({
               ref={(el) => {
                 videoContainerRefs.current[video.filename] = el;
               }}
-              className={`${isEnlarged ? "z-40 fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center" : "max-w-96"}`}
-              style={isEnlarged ? { height: "100vh", width: "100vw" } : {}}
+              className={`${isEnlarged ? "w-full" : "max-w-96"}`}
             >
               <p className="truncate w-full rounded-t-xl bg-gray-800 px-2 text-sm text-gray-300 flex items-center justify-between">
                 <span>{video.filename}</span>
@@ -317,11 +316,10 @@ export const VideosPlayer = ({
                 }}
                 muted
                 loop
-                className={`w-full object-contain ${isEnlarged ? "max-h-[90vh] max-w-[90vw]" : ""}`}
+                className={`w-full object-contain ${isEnlarged ? "max-h-[70vh]" : ""}`}
                 onTimeUpdate={
                   idx === firstVisibleIdx ? handleTimeUpdate : undefined
                 }
-                style={isEnlarged ? { zIndex: 41 } : {}}
               >
                 <source src={video.url} type="video/mp4" />
                 Your browser does not support the video tag.
