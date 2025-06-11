@@ -33,9 +33,9 @@ export const DataRecharts = React.memo(
     }, [onChartsReady]);
 
     return (
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex flex-col gap-4 overflow-y-auto pr-4">
         {data.map((group, idx) => (
-          <div key={idx} className="flex-shrink-0 min-w-[28rem]">
+          <div key={idx} className="flex-shrink-0 w-full">
             <SingleDataGraph
               data={group}
               hoveredTime={hoveredTime}
@@ -145,8 +145,8 @@ const SingleDataGraph = React.memo(
     };
 
     return (
-      <div className="w-full">
-        <div className="w-full h-80" onMouseLeave={handleMouseLeave}>
+      <div className="flex w-full">
+        <div className="flex-1 h-80" onMouseLeave={handleMouseLeave}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
@@ -221,7 +221,9 @@ const SingleDataGraph = React.memo(
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <CustomLegend />
+        <div className="ml-4">
+          <CustomLegend />
+        </div>
       </div>
     );
   },
