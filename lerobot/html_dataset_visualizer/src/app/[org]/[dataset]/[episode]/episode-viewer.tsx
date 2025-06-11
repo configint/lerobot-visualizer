@@ -42,6 +42,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
     chartDataGroups,
     episodes,
     episodeLabels,
+    tasks,
     ignoredColumns,
   } = data;
 
@@ -198,6 +199,11 @@ function EpisodeViewerInner({ data }: { data: any }) {
             <p className="font-mono text-lg font-semibold">
               episode {episodeId}
             </p>
+            {tasks?.length > 0 && (
+              <p className="text-sm">
+                tasks: <span className="font-mono">{tasks.join(", ")}</span>
+              </p>
+            )}
           </div>
         </div>
 

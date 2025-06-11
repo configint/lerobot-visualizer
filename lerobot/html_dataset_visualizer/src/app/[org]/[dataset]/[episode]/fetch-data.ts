@@ -50,8 +50,9 @@ export async function getEpisodeData(
       (_, i) => i + 1,
     );
 
-    // Fetch episode metadata to build labels
+    // Fetch episode metadata to build labels and tasks
     const episodesLabels: Record<number, string> = {};
+    const episodesTasks: Record<number, string[]> = {};
     try {
       const episodesUrl = await getSignedS3Url("meta/episodes.jsonl");
       const text = await (await fetch(episodesUrl)).text();
@@ -65,6 +66,7 @@ export async function getEpisodeData(
           ? ep.input_key[1].split("/").slice(-5).join("/")
           : "";
         episodesLabels[epNum] = `${epNum}: ${labelPath}`;
+        episodesTasks[epNum] = Array.isArray(ep.tasks) ? ep.tasks : [];
       }
     } catch (err) {
       console.warn("Failed to fetch episodes.jsonl", err);
@@ -239,6 +241,7 @@ export async function getEpisodeData(
       chartDataGroups,
       episodes,
       episodeLabels: episodesLabels,
+      tasks: episodesTasks[episodeId + 1] ?? [],
       ignoredColumns,
       duration,
     };
