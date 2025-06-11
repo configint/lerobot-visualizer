@@ -7,6 +7,7 @@ interface SidebarProps {
   datasetInfo: any;
   paginatedEpisodes: any[];
   episodeId: any;
+  episodeLabels: Record<number, string>;
   totalPages: number;
   currentPage: number;
   prevPage: () => void;
@@ -17,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   datasetInfo,
   paginatedEpisodes,
   episodeId,
+  episodeLabels,
   totalPages,
   currentPage,
   prevPage,
@@ -70,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   href={`./episode_${episode}`}
                   className={`underline ${episode === episodeId ? "-ml-1 font-bold" : ""}`}
                 >
-                  Episode {episode}
+                  {episodeLabels[episode] ?? `Episode ${episode}`}
                 </Link>
               </li>
             ))}

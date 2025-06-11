@@ -50,6 +50,26 @@ export async function getEpisodeData(
       (_, i) => i + 1,
     );
 
+    // Fetch episode metadata to build labels
+    const episodesLabels: Record<number, string> = {};
+    try {
+      const episodesUrl = await getSignedS3Url("meta/episodes.jsonl");
+      const text = await (await fetch(episodesUrl)).text();
+      const episodesData = text
+        .split("\n")
+        .filter((line) => line.trim().length)
+        .map((line) => JSON.parse(line));
+      for (const ep of episodesData) {
+        const epNum = Number(ep.episode_index) + 1;
+        const labelPath = Array.isArray(ep.input_key)
+          ? ep.input_key[1].split("/").slice(-5).join("/")
+          : "";
+        episodesLabels[epNum] = `${epNum}: ${labelPath}`;
+      }
+    } catch (err) {
+      console.warn("Failed to fetch episodes.jsonl", err);
+    }
+
     // Videos information
     const videosInfo = Object.entries(info.features)
       .filter(([key, value]) => value.dtype === "video")
@@ -218,6 +238,7 @@ export async function getEpisodeData(
       videosInfo: resolvedVideosInfo,
       chartDataGroups,
       episodes,
+      episodeLabels: episodesLabels,
       ignoredColumns,
       duration,
     };

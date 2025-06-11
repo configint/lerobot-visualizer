@@ -41,6 +41,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
     videosInfo,
     chartDataGroups,
     episodes,
+    episodeLabels,
     ignoredColumns,
   } = data;
 
@@ -160,6 +161,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
         datasetInfo={datasetInfo}
         paginatedEpisodes={paginatedEpisodes}
         episodeId={episodeId}
+        episodeLabels={episodeLabels}
         totalPages={totalPages}
         currentPage={currentPage}
         prevPage={prevPage}
