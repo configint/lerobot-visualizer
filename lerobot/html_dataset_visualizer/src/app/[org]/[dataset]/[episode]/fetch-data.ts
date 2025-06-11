@@ -50,6 +50,20 @@ export async function getEpisodeData(
       (_, i) => i + 1,
     );
 
+    // Load tasks from episodes.jsonl
+    const episodesUrl = await getSignedS3Url("meta/episodes.jsonl");
+    const episodesRes = await fetch(episodesUrl);
+    const episodesText = await episodesRes.text();
+    let tasks: string[] = [];
+    for (const line of episodesText.split("\n")) {
+      if (!line.trim()) continue;
+      const obj = JSON.parse(line);
+      if (obj.episode_index === episodeId) {
+        tasks = obj.tasks ?? [];
+        break;
+      }
+    }
+
     // Videos information
     const videosInfo = Object.entries(info.features)
       .filter(([key, value]) => value.dtype === "video")
@@ -218,6 +232,7 @@ export async function getEpisodeData(
       videosInfo: resolvedVideosInfo,
       chartDataGroups,
       episodes,
+      tasks,
       ignoredColumns,
       duration,
     };

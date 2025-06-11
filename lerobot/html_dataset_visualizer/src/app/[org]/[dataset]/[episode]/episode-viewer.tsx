@@ -41,6 +41,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
     videosInfo,
     chartDataGroups,
     episodes,
+    tasks,
     ignoredColumns,
   } = data;
 
@@ -205,6 +206,12 @@ function EpisodeViewerInner({ data }: { data: any }) {
             videosInfo={videosInfo}
             onVideosReady={() => setVideosReady(true)}
           />
+        )}
+
+        {tasks && tasks.length > 0 && (
+          <p className="font-medium mt-2">
+            Tasks: <span className="italic">{tasks.join(", ")}</span>
+          </p>
         )}
 
         {/* Graph */}
