@@ -169,70 +169,73 @@ function EpisodeViewerInner({ data }: { data: any }) {
         nextPage={nextPage}
       />
 
-      {/* Content */}
-      <div
-        className={`flex max-h-screen flex-col gap-4 p-4 md:flex-1 relative ${isLoading ? "overflow-hidden" : "overflow-y-auto"}`}
-      >
-        {isLoading && <Loading />}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Videos column */}
+        <div
+          className={`flex w-1/2 flex-col gap-4 p-4 relative ${isLoading ? "overflow-hidden" : "overflow-y-auto"}`}
+        >
+          {isLoading && <Loading />}
 
-        <div className="flex items-center justify-start my-4">
-          <a
-            href="https://github.com/huggingface/lerobot"
-            target="_blank"
-            className="block"
-          >
-            <img
-              src="https://github.com/huggingface/lerobot/raw/main/media/lerobot-logo-thumbnail.png"
-              alt="LeRobot Logo"
-              className="w-32"
-            />
-          </a>
-
-          <div>
+          <div className="flex items-center justify-start my-4">
             <a
-              href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
+              href="https://github.com/huggingface/lerobot"
               target="_blank"
+              className="block"
             >
-              <p className="text-lg font-semibold">{datasetInfo.repoId}</p>
+              <img
+                src="https://github.com/huggingface/lerobot/raw/main/media/lerobot-logo-thumbnail.png"
+                alt="LeRobot Logo"
+                className="w-32"
+              />
             </a>
 
-            <p className="font-mono text-lg font-semibold">
-              episode {episodeId}
-            </p>
-            {tasks?.length > 0 && (
-              <p className="text-sm">
-                tasks: <span className="font-mono">{tasks.join(", ")}</span>
+            <div>
+              <a
+                href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
+                target="_blank"
+              >
+                <p className="text-lg font-semibold">{datasetInfo.repoId}</p>
+              </a>
+
+              <p className="font-mono text-lg font-semibold">
+                episode {episodeId}
+              </p>
+              {tasks?.length > 0 && (
+                <p className="text-sm">
+                  tasks: <span className="font-mono">{tasks.join(", ")}</span>
+                </p>
+              )}
+            </div>
+          </div>
+
+          {videosInfo.length && (
+            <VideosPlayer
+              videosInfo={videosInfo}
+              onVideosReady={() => setVideosReady(true)}
+            />
+          )}
+
+          <PlaybackBar />
+        </div>
+
+        {/* Charts column */}
+        <div className="flex w-1/2 flex-col p-4 overflow-y-auto">
+          <div className="mb-4">
+            <DataRecharts
+              data={chartDataGroups}
+              onChartsReady={() => setChartsReady(true)}
+            />
+
+            {ignoredColumns.length > 0 && (
+              <p className="mt-2 text-orange-700">
+                Columns{" "}
+                <span className="font-mono">{ignoredColumns.join(", ")}</span>{" "}
+                are NOT shown since the visualizer currently does not support 2D
+                or 3D data.
               </p>
             )}
           </div>
         </div>
-
-        {/* Videos */}
-        {videosInfo.length && (
-          <VideosPlayer
-            videosInfo={videosInfo}
-            onVideosReady={() => setVideosReady(true)}
-          />
-        )}
-
-        {/* Graph */}
-        <div className="mb-4">
-          <DataRecharts
-            data={chartDataGroups}
-            onChartsReady={() => setChartsReady(true)}
-          />
-
-          {ignoredColumns.length > 0 && (
-            <p className="mt-2 text-orange-700">
-              Columns{" "}
-              <span className="font-mono">{ignoredColumns.join(", ")}</span> are
-              NOT shown since the visualizer currently does not support 2D or 3D
-              data.
-            </p>
-          )}
-        </div>
-
-        <PlaybackBar />
       </div>
     </div>
   );
