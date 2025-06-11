@@ -19,13 +19,16 @@ export async function getEpisodeData(
   dataset: string,
   episodeId: number,
 ) {
-  const repoId = `${org}/${dataset}`.replace(/~/g, "/");
-  const [bucket, ...prefixParts] = repoId.split("/");
-  const keyPrefix = prefixParts.join("/").replace(/\/$/, "");
+  const repoId = `${org}/${dataset}`;
+  const bucket = "configint";
+  const keyPrefix = `data-builder/${org}/data/${dataset}`.replace(/\/$/, "");
   const s3Client = new S3Client({ region: "us-east-2" });
 
   const getSignedS3Url = async (key: string) => {
-    const command = new GetObjectCommand({ Bucket: bucket, Key: `${keyPrefix}/${key}` });
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: `${keyPrefix}/${key}`,
+    });
     return getSignedUrl(s3Client, command, { expiresIn: 3600 });
   };
 
