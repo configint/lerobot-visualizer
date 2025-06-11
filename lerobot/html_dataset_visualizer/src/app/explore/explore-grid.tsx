@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { postParentMessageWithParams } from "@/utils/postParentMessage";
 
 type ExploreGridProps = {
-  datasets: Array<{ id: string; videoUrl: string | null }>;
+  datasets: Array<{ id: string; displayName: string; videoUrl: string | null }>;
   currentPage: number;
   totalPages: number;
 };
@@ -68,7 +68,7 @@ export default function ExploreGrid({
             />
             <div className="absolute top-0 left-0 w-full h-full bg-black/40 z-10 pointer-events-none" />
             <div className="relative z-20 font-mono text-blue-100 break-all text-sm bg-black/60 backdrop-blur px-2 py-1 rounded shadow">
-              {ds.id}
+              {ds.displayName}
             </div>
           </Link>
         ))}

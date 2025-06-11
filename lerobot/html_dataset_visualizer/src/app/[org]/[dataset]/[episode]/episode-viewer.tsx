@@ -193,7 +193,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
               href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
               target="_blank"
             >
-              <p className="text-lg font-semibold">{datasetInfo.repoId}</p>
+              <p className="text-lg font-semibold">{datasetInfo.displayName}</p>
             </a>
 
             <p className="font-mono text-lg font-semibold">

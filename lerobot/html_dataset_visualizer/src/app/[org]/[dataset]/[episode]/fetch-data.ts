@@ -5,6 +5,7 @@ import {
   formatStringWithVars,
   readParquetColumn,
 } from "@/utils/parquetUtils";
+import { getDatasetDisplayName } from "@/utils/datasetUtils";
 import { pick } from "@/utils/pick";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -20,12 +21,16 @@ export async function getEpisodeData(
   episodeId: number,
 ) {
   const repoId = `${org}/${dataset}`.replace(/~/g, "/");
+  const displayName = getDatasetDisplayName(repoId);
   const [bucket, ...prefixParts] = repoId.split("/");
   const keyPrefix = prefixParts.join("/").replace(/\/$/, "");
   const s3Client = new S3Client({ region: "us-east-2" });
 
   const getSignedS3Url = async (key: string) => {
-    const command = new GetObjectCommand({ Bucket: bucket, Key: `${keyPrefix}/${key}` });
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: `${keyPrefix}/${key}`,
+    });
     return getSignedUrl(s3Client, command, { expiresIn: 3600 });
   };
 
@@ -38,6 +43,7 @@ export async function getEpisodeData(
     // Dataset information
     const datasetInfo = {
       repoId,
+      displayName,
       total_frames: info.total_frames,
       total_episodes: info.total_episodes,
       fps: info.fps,

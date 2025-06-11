@@ -5,9 +5,14 @@ import {
   fetchJson,
   formatStringWithVars,
 } from "@/utils/parquetUtils";
+import { getDatasetDisplayName } from "@/utils/datasetUtils";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { S3Client, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  HeadObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Server component for data fetching
@@ -31,11 +36,10 @@ export default async function ExplorePage({
       }),
     );
 
-    const builderDatasets: string[] =
-      (scanBuilder.Items || []).map(
-        (item: { version: string; data_name: string }) =>
-          `configint/data-builder/${item.version}/data/${item.data_name}/`,
-      );
+    const builderDatasets: string[] = (scanBuilder.Items || []).map(
+      (item: { version: string; data_name: string }) =>
+        `configint/data-builder/${item.version}/data/${item.data_name}/`,
+    );
 
     const scanVisualizer = await docClient.send(
       new ScanCommand({
@@ -44,10 +48,9 @@ export default async function ExplorePage({
       }),
     );
 
-    const visualizerDatasets: string[] =
-      (scanVisualizer.Items || []).map(
-        (item: { s3_dir: string }) => item.s3_dir,
-      );
+    const visualizerDatasets: string[] = (scanVisualizer.Items || []).map(
+      (item: { s3_dir: string }) => item.s3_dir,
+    );
 
     const allDatasets = [...builderDatasets, ...visualizerDatasets];
 
@@ -73,9 +76,10 @@ export default async function ExplorePage({
       datasets.map(async (s3Dir: string) => {
         try {
           // Parse S3 URI (e.g. s3://my-bucket/path/to/dataset)
-          const [bucket, ...keyParts] = s3Dir.split('/');
-          const repoId = `${bucket}/${keyParts.join('~')}`;
-          const keyPrefix = keyParts.join('/').replace(/\/$/, '');
+          const [bucket, ...keyParts] = s3Dir.split("/");
+          const repoId = `${bucket}/${keyParts.join("~")}`;
+          const displayName = getDatasetDisplayName(repoId);
+          const keyPrefix = keyParts.join("/").replace(/\/$/, "");
 
           // ------- meta/info.json -------
           const infoKey = `${keyPrefix}/meta/info.json`;
@@ -120,14 +124,21 @@ export default async function ExplorePage({
             }
           }
 
-          return videoUrl ? { id: repoId, videoUrl } : null;
+          return videoUrl ? { id: repoId, displayName, videoUrl } : null;
         } catch (err) {
-          console.error(`Failed to fetch or parse dataset info for ${s3Dir}:`, err);
+          console.error(
+            `Failed to fetch or parse dataset info for ${s3Dir}:`,
+            err,
+          );
           return null;
         }
       }),
     )
-  ).filter(Boolean) as { id: string; videoUrl: string | null }[];
+  ).filter(Boolean) as {
+    id: string;
+    displayName: string;
+    videoUrl: string | null;
+  }[];
 
   return (
     <ExploreGrid
