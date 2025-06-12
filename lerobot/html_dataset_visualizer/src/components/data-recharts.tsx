@@ -12,15 +12,23 @@ import {
   Tooltip,
 } from "recharts";
 
+const SERIES_NAME_DELIMITER = " | ";
+
+type ColumnGroup = {
+  key: string;
+  value: string[];
+};
+
 type DataGraphProps = {
   data: Array<Record<string, number>>;
+  columns: ColumnGroup[];
   onChartsReady?: () => void;
 };
 
 import React, { useMemo } from "react";
 
 export const DataRecharts = React.memo(
-  ({ data, onChartsReady }: DataGraphProps) => {
+  ({ data, columns, onChartsReady }: DataGraphProps) => {
     // Shared hoveredTime for all graphs
     const [hoveredTime, setHoveredTime] = useState<number | null>(null);
 
@@ -36,6 +44,7 @@ export const DataRecharts = React.memo(
       <div className="flex flex-col gap-4 overflow-y-auto pr-4">
         <SingleDataGraph
           data={data}
+          columns={columns}
           hoveredTime={hoveredTime}
           setHoveredTime={setHoveredTime}
         />
@@ -48,10 +57,12 @@ export const DataRecharts = React.memo(
 const SingleDataGraph = React.memo(
   ({
     data,
+    columns,
     hoveredTime,
     setHoveredTime,
   }: {
     data: Array<Record<string, number>>;
+    columns: ColumnGroup[];
     hoveredTime: number | null;
     setHoveredTime: (t: number | null) => void;
   }) => {
@@ -114,9 +125,9 @@ const SingleDataGraph = React.memo(
       }
     };
 
+
     // Custom legend to show current value next to each series
     const CustomLegend = () => {
-      // Find the closest data point to the hovered or current time
       const closestIndex = findClosestDataIndex(
         hoveredTime != null ? hoveredTime : currentTime,
       );
@@ -128,52 +139,66 @@ const SingleDataGraph = React.memo(
         );
       };
 
+      const handleColumnToggle = (col: ColumnGroup) => {
+        const allVisible = col.value.every((k) => visibleKeys.includes(k));
+        setVisibleKeys((prev) => {
+          if (allVisible) {
+            return prev.filter((k) => !col.value.includes(k));
+          }
+          return Array.from(new Set([...prev, ...col.value]));
+        });
+      };
+
+      const colorMap = useMemo(() => {
+        const map = new Map<string, string>();
+        dataKeys.forEach((k, idx) => {
+          map.set(k, `hsl(${(idx * 360) / dataKeys.length}, 100%, 50%)`);
+        });
+        return map;
+      }, [dataKeys]);
+
       return (
-        <div className="grid grid-cols-[repeat(auto-fit,250px)] gap-4 mx-8">
-          {dataKeys.map((key, idx) => {
-            const color = `hsl(${idx * (360 / dataKeys.length)}, 100%, 50%)`;
-            const isChecked = visibleKeys.includes(key);
+        <div className="flex flex-col gap-3 mx-4">
+          {columns.map((col) => {
+            const allChecked = col.value.every((k) => visibleKeys.includes(k));
             return (
-              <label
-                key={key}
-                className="flex gap-2 cursor-pointer select-none"
-              >
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => handleCheckboxChange(key)}
-                  className="size-3.5 mt-1"
-                  style={{ accentColor: color }}
-                />
-                <span
-                  className={`text-sm break-all w-40 ${isChecked ? "text-white" : "text-gray-400"}`}
-                >
-                  {key}:
-                </span>
-                <span
-                  className={`text-sm font-mono ml-auto ${isChecked ? "text-orange-300" : "text-gray-500"}`}
-                >
-                  {typeof currentData[key] === "number"
-                    ? currentData[key].toFixed(2)
-                    : "--"}
-                </span>
-              </label>
+              <div key={col.key} className="flex items-start gap-4">
+                <label className="flex gap-2 w-36 select-none">
+                  <input
+                    type="checkbox"
+                    className="size-3.5 mt-1"
+                    checked={allChecked}
+                    onChange={() => handleColumnToggle(col)}
+                  />
+                  <span className="text-sm truncate">{col.key}</span>
+                </label>
+                <div className="flex flex-wrap gap-4">
+                  {col.value.map((key) => {
+                    const color = colorMap.get(key) || "#fff";
+                    const isChecked = visibleKeys.includes(key);
+                    const label = key.split(SERIES_NAME_DELIMITER)[1] || key;
+                    return (
+                      <label key={key} className="flex gap-1 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleCheckboxChange(key)}
+                          className="size-3.5 mt-1"
+                          style={{ accentColor: color }}
+                        />
+                        <span className={`text-sm ${isChecked ? 'text-white' : 'text-gray-400'}`}>{label}</span>
+                        <span className={`text-sm font-mono ml-1 ${isChecked ? 'text-orange-300' : 'text-gray-500'}`}>{typeof currentData[key] === 'number' ? currentData[key].toFixed(2) : '--'}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
       );
     };
-
     return (
-      <div className="flex flex-col w-full">
-        <div className="flex justify-end mb-2">
-          <button
-            className="text-xs border border-slate-500 rounded px-2 py-1"
-            onClick={toggleAll}
-          >
-            {visibleKeys.length === dataKeys.length ? "Hide All Fields" : "Show All Fields"}
-          </button>
-        </div>
         <div className="h-80" onMouseLeave={handleMouseLeave}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
@@ -251,6 +276,14 @@ const SingleDataGraph = React.memo(
         </div>
         <div className="mt-4">
           <CustomLegend />
+        </div>
+        <div className="flex justify-end mt-2">
+          <button
+            className="text-xs border border-slate-500 rounded px-2 py-1"
+            onClick={toggleAll}
+          >
+            {visibleKeys.length === dataKeys.length ? "Hide All Fields" : "Show All Fields"}
+          </button>
         </div>
       </div>
     );

@@ -40,6 +40,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
     episodeId,
     videosInfo,
     chartData,
+    columns,
     episodes,
     episodeLabels,
     tasks,
@@ -233,6 +234,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
           <div className="w-full max-w-full">
             <DataRecharts
               data={chartData}
+              columns={columns}
               onChartsReady={() => setChartsReady(true)}
             />
 

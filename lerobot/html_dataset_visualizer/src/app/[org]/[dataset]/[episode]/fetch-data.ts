@@ -173,6 +173,7 @@ export async function getEpisodeData(
       episodeId: episodeId + 1,
       videosInfo: resolvedVideosInfo,
       chartData,
+      columns,
       episodes,
       episodeLabels: episodesLabels,
       tasks: episodesTasks[episodeId + 1] ?? [],
