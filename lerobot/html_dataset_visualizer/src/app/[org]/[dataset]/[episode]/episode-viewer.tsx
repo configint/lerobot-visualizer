@@ -178,6 +178,36 @@ function EpisodeViewerInner({ data }: { data: any }) {
         nextPage={nextPage}
       />
 
+      {/* Fixed header on top right */}
+      <div className="fixed top-0 right-0 flex flex-col items-end p-4 z-20 text-right">
+        <a
+          href="https://github.com/huggingface/lerobot"
+          target="_blank"
+          className="block"
+        >
+          <img
+            src="https://github.com/huggingface/lerobot/raw/main/media/lerobot-logo-thumbnail.png"
+            alt="LeRobot Logo"
+            className="w-24"
+          />
+        </a>
+        <a
+          href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
+          target="_blank"
+        >
+          <p className="text-lg font-semibold">{datasetInfo.repoId}</p>
+        </a>
+        <p className="font-mono text-lg font-semibold">
+          episode {episodeId}
+          {episodeLabelPath && `: ${episodeLabelPath}`}
+        </p>
+        {tasks?.length > 0 && (
+          <p className="text-lg mt-2">
+            tasks: <span className="font-mono">{tasks.join(', ')}</span>
+          </p>
+        )}
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
         {/* Videos column */}
         <div
@@ -185,39 +215,6 @@ function EpisodeViewerInner({ data }: { data: any }) {
         >
           {isLoading && <Loading />}
 
-          <div className="flex items-center justify-start my-4">
-            <a
-              href="https://github.com/huggingface/lerobot"
-              target="_blank"
-              className="block"
-            >
-              <img
-                src="https://github.com/huggingface/lerobot/raw/main/media/lerobot-logo-thumbnail.png"
-                alt="LeRobot Logo"
-                className="w-32"
-              />
-            </a>
-
-            <div>
-              <a
-                href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
-                target="_blank"
-              >
-                <p className="text-lg font-semibold">{datasetInfo.repoId}</p>
-              </a>
-
-              <p className="font-mono text-lg font-semibold">
-                episode {episodeId}
-                {episodeLabelPath && `: ${episodeLabelPath}`}
-              </p>
-            </div>
-          </div>
-
-          {tasks?.length > 0 && (
-            <p className="text-lg mb-2">
-              tasks: <span className="font-mono">{tasks.join(", ")}</span>
-            </p>
-          )}
 
           {videosInfo.length && (
             <VideosPlayer
@@ -225,13 +222,11 @@ function EpisodeViewerInner({ data }: { data: any }) {
               onVideosReady={() => setVideosReady(true)}
             />
           )}
-
-          <PlaybackBar />
         </div>
 
         {/* Charts column */}
-        <div className="flex w-[50%] flex-col p-4 items-center justify-center">
-          <div className="w-full max-w-full">
+        <div className="flex w-[50%] flex-col p-4 items-center pt-36 overflow-hidden">
+          <div className="w-full max-w-full flex-1 flex flex-col overflow-hidden">
             <DataRecharts
               data={chartData}
               columns={columns}
@@ -248,6 +243,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
               </p>
             )}
           </div>
+          <PlaybackBar />
         </div>
       </div>
     </div>

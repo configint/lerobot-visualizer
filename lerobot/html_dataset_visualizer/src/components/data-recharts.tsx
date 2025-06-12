@@ -42,7 +42,7 @@ export const DataRecharts = React.memo(
     }, [onChartsReady]);
 
     return (
-      <div className="flex flex-col gap-4 overflow-y-auto pr-4">
+      <div className="flex flex-col h-full pr-4">
         <SingleDataGraph
           data={data}
           columns={columns}
@@ -172,7 +172,7 @@ const SingleDataGraph = React.memo(
 
       const maxIndices = Math.max(...columns.map((c) => c.value.length));
       return (
-        <div className="overflow-x-auto mx-4">
+        <div className="overflow-x-auto mx-4 max-h-[40vh] overflow-y-auto">
           <table className="text-sm">
             <thead>
               <tr>
@@ -302,7 +302,7 @@ const SingleDataGraph = React.memo(
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4">
+        <div className="mt-4 flex-1 overflow-y-auto">
           <CustomLegend />
         </div>
         <div className="flex justify-end mt-2">
