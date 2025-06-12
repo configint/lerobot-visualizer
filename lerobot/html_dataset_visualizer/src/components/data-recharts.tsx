@@ -59,10 +59,12 @@ const SingleDataGraph = React.memo(
   const chartData = useMemo(() => data, [data]);
   const [dataKeys, setDataKeys] = useState<string[]>([]);
   const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
-  const [showLegend, setShowLegend] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("showLegend") === "true";
-  });
+
+  const toggleAll = () => {
+    setVisibleKeys((prev) =>
+      prev.length === dataKeys.length ? [] : [...dataKeys],
+    );
+  };
 
     useEffect(() => {
       if (!data || data.length === 0) return;
@@ -77,10 +79,10 @@ const SingleDataGraph = React.memo(
           const parsed = JSON.parse(saved) as string[];
           setVisibleKeys(parsed.filter((k) => keys.includes(k)));
         } catch {
-          setVisibleKeys(keys);
+          setVisibleKeys([]);
         }
       } else {
-        setVisibleKeys(keys);
+        setVisibleKeys([]);
       }
     }, [data]);
 
@@ -167,17 +169,9 @@ const SingleDataGraph = React.memo(
         <div className="flex justify-end mb-2">
           <button
             className="text-xs border border-slate-500 rounded px-2 py-1"
-            onClick={() =>
-              setShowLegend((prev) => {
-                const next = !prev;
-                if (typeof window !== "undefined") {
-                  localStorage.setItem("showLegend", next.toString());
-                }
-                return next;
-              })
-            }
+            onClick={toggleAll}
           >
-            {showLegend ? "Hide Fields" : "Show Fields"}
+            {visibleKeys.length === dataKeys.length ? "Hide All Fields" : "Show All Fields"}
           </button>
         </div>
         <div className="h-80" onMouseLeave={handleMouseLeave}>
@@ -255,11 +249,9 @@ const SingleDataGraph = React.memo(
             </LineChart>
           </ResponsiveContainer>
         </div>
-        {showLegend && (
-          <div className="mt-4">
-            <CustomLegend />
-          </div>
-        )}
+        <div className="mt-4">
+          <CustomLegend />
+        </div>
       </div>
     );
   },
