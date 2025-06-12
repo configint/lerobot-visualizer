@@ -12,15 +12,24 @@ import {
   Tooltip,
 } from "recharts";
 
+const SERIES_NAME_DELIMITER = " | ";
+
+type ColumnGroup = {
+  key: string;
+  value: string[];
+};
+
 type DataGraphProps = {
-  data: Array<Array<Record<string, number>>>;
+  data: Array<Record<string, number>>;
+  columns: ColumnGroup[];
+  datasetId: string;
   onChartsReady?: () => void;
 };
 
 import React, { useMemo } from "react";
 
 export const DataRecharts = React.memo(
-  ({ data, onChartsReady }: DataGraphProps) => {
+  ({ data, columns, datasetId, onChartsReady }: DataGraphProps) => {
     // Shared hoveredTime for all graphs
     const [hoveredTime, setHoveredTime] = useState<number | null>(null);
 
@@ -34,15 +43,13 @@ export const DataRecharts = React.memo(
 
     return (
       <div className="flex flex-col gap-4 overflow-y-auto pr-4">
-        {data.map((group, idx) => (
-          <div key={idx} className="flex-shrink-0 w-full">
-            <SingleDataGraph
-              data={group}
-              hoveredTime={hoveredTime}
-              setHoveredTime={setHoveredTime}
-            />
-          </div>
-        ))}
+        <SingleDataGraph
+          data={data}
+          columns={columns}
+          datasetId={datasetId}
+          hoveredTime={hoveredTime}
+          setHoveredTime={setHoveredTime}
+        />
       </div>
     );
   },
@@ -52,24 +59,69 @@ export const DataRecharts = React.memo(
 const SingleDataGraph = React.memo(
   ({
     data,
+    columns,
+    datasetId,
     hoveredTime,
     setHoveredTime,
   }: {
     data: Array<Record<string, number>>;
+    columns: ColumnGroup[];
+    datasetId: string;
     hoveredTime: number | null;
     setHoveredTime: (t: number | null) => void;
   }) => {
     const { currentTime, setCurrentTime } = useTime();
-    const chartData = useMemo(() => data, [data]);
-    const [dataKeys, setDataKeys] = useState<string[]>([]);
-    const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
+  const chartData = useMemo(() => data, [data]);
+  const [dataKeys, setDataKeys] = useState<string[]>([]);
+  const storageKey = `visibleKeys:${datasetId}`;
+  const [visibleKeys, setVisibleKeys] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          return JSON.parse(saved) as string[];
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
+
+  const colorMap = useMemo(() => {
+    const keys = visibleKeys.length > 0 ? visibleKeys : dataKeys;
+    const map: Record<string, string> = {};
+    keys.forEach((k, i) => {
+      const hue = (i * 360) / keys.length;
+      map[k] = `hsl(${hue}, 100%, 50%)`;
+    });
+    // fallback colors for non-visible keys
+    dataKeys.forEach((k, i) => {
+      if (!(k in map)) {
+        const hue = (i * 360) / dataKeys.length;
+        map[k] = `hsl(${hue}, 100%, 50%)`;
+      }
+    });
+    return map;
+  }, [visibleKeys, dataKeys]);
+
+  const toggleAll = () => {
+    setVisibleKeys((prev) =>
+      prev.length === dataKeys.length ? [] : [...dataKeys],
+    );
+  };
+
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+    const keys = Object.keys(data[0]).filter((k) => k !== "timestamp");
+    setDataKeys(keys);
+    setVisibleKeys((prev) => prev.filter((k) => keys.includes(k)));
+  }, [data]);
 
     useEffect(() => {
-      if (!data || data.length === 0) return;
-      const keys = Object.keys(data[0]).filter((k) => k !== "timestamp");
-      setDataKeys(keys);
-      setVisibleKeys(keys);
-    }, [data]);
+      if (typeof window === "undefined") return;
+      localStorage.setItem(storageKey, JSON.stringify(visibleKeys));
+    }, [visibleKeys, storageKey]);
 
     // Find the closest data point to the current time for highlighting
     const findClosestDataIndex = (time: number) => {
@@ -94,9 +146,9 @@ const SingleDataGraph = React.memo(
       }
     };
 
+
     // Custom legend to show current value next to each series
     const CustomLegend = () => {
-      // Find the closest data point to the hovered or current time
       const closestIndex = findClosestDataIndex(
         hoveredTime != null ? hoveredTime : currentTime,
       );
@@ -108,45 +160,74 @@ const SingleDataGraph = React.memo(
         );
       };
 
+      const handleColumnToggle = (col: ColumnGroup) => {
+        const allVisible = col.value.every((k) => visibleKeys.includes(k));
+        setVisibleKeys((prev) => {
+          if (allVisible) {
+            return prev.filter((k) => !col.value.includes(k));
+          }
+          return Array.from(new Set([...prev, ...col.value]));
+        });
+      };
+
+      const maxIndices = Math.max(...columns.map((c) => c.value.length));
       return (
-        <div className="grid grid-cols-[repeat(auto-fit,250px)] gap-4 mx-8">
-          {dataKeys.map((key, idx) => {
-            const color = `hsl(${idx * (360 / dataKeys.length)}, 100%, 50%)`;
-            const isChecked = visibleKeys.includes(key);
-            return (
-              <label
-                key={key}
-                className="flex gap-2 cursor-pointer select-none"
-              >
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={() => handleCheckboxChange(key)}
-                  className="size-3.5 mt-1"
-                  style={{ accentColor: color }}
-                />
-                <span
-                  className={`text-sm break-all w-40 ${isChecked ? "text-white" : "text-gray-400"}`}
-                >
-                  {key}:
-                </span>
-                <span
-                  className={`text-sm font-mono ml-auto ${isChecked ? "text-orange-300" : "text-gray-500"}`}
-                >
-                  {typeof currentData[key] === "number"
-                    ? currentData[key].toFixed(2)
-                    : "--"}
-                </span>
-              </label>
-            );
-          })}
+        <div className="overflow-x-auto mx-4">
+          <table className="text-sm">
+            <thead>
+              <tr>
+                <th className="text-left pr-4">field</th>
+                {Array.from({ length: maxIndices }).map((_, i) => (
+                  <th key={i} className="px-2 text-center">{i}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {columns.map((col) => {
+                const allChecked = col.value.every((k) => visibleKeys.includes(k));
+                return (
+                  <tr key={col.key} className="align-top">
+                    <td className="pr-4 whitespace-nowrap w-48">
+                      <label className="flex gap-2 select-none">
+                        <input
+                          type="checkbox"
+                          className="size-3.5"
+                          checked={allChecked}
+                          onChange={() => handleColumnToggle(col)}
+                          style={{ accentColor: colorMap[col.value[0]] }}
+                        />
+                        <span>{col.key}</span>
+                      </label>
+                    </td>
+                    {Array.from({ length: maxIndices }).map((_, idx) => {
+                      const key = col.value[idx];
+                      if (!key) return <td key={idx} className="px-2" />;
+                      const isChecked = visibleKeys.includes(key);
+                      return (
+                        <td key={idx} className="px-2 text-center">
+                          <label className="flex justify-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="size-3.5"
+                              checked={isChecked}
+                              onChange={() => handleCheckboxChange(key)}
+                              style={{ accentColor: colorMap[key] }}
+                            />
+                          </label>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       );
     };
-
     return (
-      <div className="flex w-full">
-        <div className="flex-1 h-80" onMouseLeave={handleMouseLeave}>
+      <div>
+        <div className="h-96" onMouseLeave={handleMouseLeave}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
@@ -203,14 +284,14 @@ const SingleDataGraph = React.memo(
 
               {/* Render lines for visible dataKeys only */}
               {dataKeys.map(
-                (key, index) =>
+                (key) =>
                   visibleKeys.includes(key) && (
                     <Line
                       key={key}
                       type="monotone"
                       dataKey={key}
                       name={key}
-                      stroke={`hsl(${index * (360 / dataKeys.length)}, 100%, 50%)`}
+                      stroke={colorMap[key]}
                       dot={false}
                       activeDot={false}
                       strokeWidth={1.5}
@@ -221,8 +302,16 @@ const SingleDataGraph = React.memo(
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="ml-4">
+        <div className="mt-4">
           <CustomLegend />
+        </div>
+        <div className="flex justify-end mt-2">
+          <button
+            className="text-xs border border-slate-500 rounded px-2 py-1"
+            onClick={toggleAll}
+          >
+            {visibleKeys.length === dataKeys.length ? "Hide All Fields" : "Show All Fields"}
+          </button>
         </div>
       </div>
     );

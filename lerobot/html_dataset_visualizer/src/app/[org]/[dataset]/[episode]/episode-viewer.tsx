@@ -39,7 +39,8 @@ function EpisodeViewerInner({ data }: { data: any }) {
     datasetInfo,
     episodeId,
     videosInfo,
-    chartDataGroups,
+    chartData,
+    columns,
     episodes,
     episodeLabels,
     tasks,
@@ -180,7 +181,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
       <div className="flex flex-1 overflow-hidden">
         {/* Videos column */}
         <div
-          className={`flex w-[40%] flex-col gap-4 p-4 relative ${isLoading ? "overflow-hidden" : "overflow-y-auto"}`}
+          className={`flex w-[50%] flex-col gap-4 p-4 relative ${isLoading ? "overflow-hidden" : "overflow-y-auto"}`}
         >
           {isLoading && <Loading />}
 
@@ -229,10 +230,12 @@ function EpisodeViewerInner({ data }: { data: any }) {
         </div>
 
         {/* Charts column */}
-        <div className="flex w-[60%] flex-col p-4 overflow-y-auto">
-          <div className="mb-4">
+        <div className="flex w-[50%] flex-col p-4 items-center justify-center">
+          <div className="w-full max-w-full">
             <DataRecharts
-              data={chartDataGroups}
+              data={chartData}
+              columns={columns}
+              datasetId={datasetInfo.repoId}
               onChartsReady={() => setChartsReady(true)}
             />
 
