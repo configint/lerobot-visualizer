@@ -25,11 +25,18 @@ export async function getEpisodeData(
     return getSignedUrl("configint", `${keyPrefix}/${key}`);
   };
 
+  const publicUrl = (key: string) =>
+    `${DATASET_URL}/${repoId}/resolve/main/${key}`;
+
   try {
     const episode_chunk = Math.floor(0 / 1000);
     const jsonUrl = await sign("meta/info.json");
-
-    const info = await fetchJson<DatasetMetadata>(jsonUrl);
+    let info: DatasetMetadata;
+    try {
+      info = await fetchJson<DatasetMetadata>(jsonUrl);
+    } catch {
+      info = await fetchJson<DatasetMetadata>(publicUrl("meta/info.json"));
+    }
 
     // Dataset information
     const datasetInfo = {
@@ -65,7 +72,25 @@ export async function getEpisodeData(
         episodesTasks[epNum] = Array.isArray(ep.tasks) ? ep.tasks : [];
       }
     } catch (err) {
-      console.warn("Failed to fetch episodes.jsonl", err);
+      try {
+        const text = await (
+          await fetch(publicUrl("meta/episodes.jsonl"))
+        ).text();
+        const episodesData = text
+          .split("\n")
+          .filter((line) => line.trim().length)
+          .map((line) => JSON.parse(line));
+        for (const ep of episodesData) {
+          const epNum = Number(ep.episode_index) + 1;
+          const labelPath = Array.isArray(ep.input_key)
+            ? ep.input_key[1].split("/").slice(-5).join("/")
+            : "";
+          episodesLabels[epNum] = `${epNum}: ${labelPath}`;
+          episodesTasks[epNum] = Array.isArray(ep.tasks) ? ep.tasks : [];
+        }
+      } catch (err2) {
+        console.warn("Failed to fetch episodes.jsonl", err2);
+      }
     }
 
     // Videos information
