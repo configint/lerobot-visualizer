@@ -199,9 +199,11 @@ function EpisodeViewerInner({ data }: { data: any }) {
 
               <p className="font-mono text-lg font-semibold">
                 episode {episodeId}
+                {episodeLabels[episodeId] &&
+                  `: ${episodeLabels[episodeId].replace(`${episodeId}: `, "")}`}
               </p>
               {tasks?.length > 0 && (
-                <p className="text-sm">
+                <p className="text-lg">
                   tasks: <span className="font-mono">{tasks.join(", ")}</span>
                 </p>
               )}
