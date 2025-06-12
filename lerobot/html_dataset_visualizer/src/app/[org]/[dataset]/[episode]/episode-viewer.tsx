@@ -178,40 +178,37 @@ function EpisodeViewerInner({ data }: { data: any }) {
         nextPage={nextPage}
       />
 
+      {/* Fixed header on top right */}
+      <div className="fixed top-0 right-0 flex flex-col items-end p-4 z-20 text-right">
+        <a
+          href="https://github.com/huggingface/lerobot"
+          target="_blank"
+          className="block"
+        >
+          <img
+            src="https://github.com/huggingface/lerobot/raw/main/media/lerobot-logo-thumbnail.png"
+            alt="LeRobot Logo"
+            className="w-24"
+          />
+        </a>
+        <a
+          href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
+          target="_blank"
+        >
+          <p className="text-lg font-semibold">{datasetInfo.repoId}</p>
+        </a>
+        <p className="font-mono text-lg font-semibold">
+          episode {episodeId}
+          {episodeLabelPath && `: ${episodeLabelPath}`}
+        </p>
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
         {/* Videos column */}
         <div
           className={`flex w-[50%] flex-col gap-4 p-4 relative ${isLoading ? "overflow-hidden" : "overflow-y-auto"}`}
         >
           {isLoading && <Loading />}
-
-          <div className="flex items-center justify-start my-4">
-            <a
-              href="https://github.com/huggingface/lerobot"
-              target="_blank"
-              className="block"
-            >
-              <img
-                src="https://github.com/huggingface/lerobot/raw/main/media/lerobot-logo-thumbnail.png"
-                alt="LeRobot Logo"
-                className="w-32"
-              />
-            </a>
-
-            <div>
-              <a
-                href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
-                target="_blank"
-              >
-                <p className="text-lg font-semibold">{datasetInfo.repoId}</p>
-              </a>
-
-              <p className="font-mono text-lg font-semibold">
-                episode {episodeId}
-                {episodeLabelPath && `: ${episodeLabelPath}`}
-              </p>
-            </div>
-          </div>
 
           {tasks?.length > 0 && (
             <p className="text-lg mb-2">
