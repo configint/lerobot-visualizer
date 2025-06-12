@@ -201,6 +201,11 @@ function EpisodeViewerInner({ data }: { data: any }) {
           episode {episodeId}
           {episodeLabelPath && `: ${episodeLabelPath}`}
         </p>
+        {tasks?.length > 0 && (
+          <p className="text-lg mt-2">
+            tasks: <span className="font-mono">{tasks.join(', ')}</span>
+          </p>
+        )}
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -210,11 +215,6 @@ function EpisodeViewerInner({ data }: { data: any }) {
         >
           {isLoading && <Loading />}
 
-          {tasks?.length > 0 && (
-            <p className="text-lg mb-2">
-              tasks: <span className="font-mono">{tasks.join(", ")}</span>
-            </p>
-          )}
 
           {videosInfo.length && (
             <VideosPlayer
