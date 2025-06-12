@@ -46,6 +46,9 @@ function EpisodeViewerInner({ data }: { data: any }) {
     ignoredColumns,
   } = data;
 
+  const episodeLabelPath =
+    episodeLabels[episodeId]?.split(": ").slice(1).join(": ") || "";
+
   const [videosReady, setVideosReady] = useState(!videosInfo.length);
   const [chartsReady, setChartsReady] = useState(false);
   const isLoading = !videosReady || !chartsReady;
@@ -65,6 +68,11 @@ function EpisodeViewerInner({ data }: { data: any }) {
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
+
+  useEffect(() => {
+    const label = episodeLabelPath ? `: ${episodeLabelPath}` : "";
+    document.title = `${datasetInfo.repoId} | episode ${episodeId}${label}`;
+  }, [datasetInfo.repoId, episodeId, episodeLabelPath]);
 
   // Initialize based on URL time parameter
   useEffect(() => {
@@ -199,14 +207,16 @@ function EpisodeViewerInner({ data }: { data: any }) {
 
               <p className="font-mono text-lg font-semibold">
                 episode {episodeId}
+                {episodeLabelPath && `: ${episodeLabelPath}`}
               </p>
-              {tasks?.length > 0 && (
-                <p className="text-sm">
-                  tasks: <span className="font-mono">{tasks.join(", ")}</span>
-                </p>
-              )}
             </div>
           </div>
+
+          {tasks?.length > 0 && (
+            <p className="text-lg mb-2">
+              tasks: <span className="font-mono">{tasks.join(", ")}</span>
+            </p>
+          )}
 
           {videosInfo.length && (
             <VideosPlayer
