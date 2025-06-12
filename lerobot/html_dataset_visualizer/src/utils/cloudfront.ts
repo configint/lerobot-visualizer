@@ -18,7 +18,17 @@ async function getPrivateKey(): Promise<string> {
     const resp = await secretsClient.send(
       new GetSecretValueCommand({ SecretId: secretName }),
     );
-    cachedKey = resp.SecretString || "";
+    if (resp.SecretString) {
+      cachedKey = resp.SecretString;
+    } else if (resp.SecretBinary) {
+      const bytes =
+        resp.SecretBinary instanceof Uint8Array
+          ? Buffer.from(resp.SecretBinary)
+          : Buffer.from(resp.SecretBinary as string, "base64");
+      cachedKey = bytes.toString("utf-8");
+    } else {
+      throw new Error(`Secret ${secretName} is empty`);
+    }
   }
   return cachedKey;
 }

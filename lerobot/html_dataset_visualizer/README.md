@@ -29,6 +29,7 @@ This tool is designed to help robotics researchers and practitioners quickly ins
 ## Getting Started
 
 For node and npm installation:
+
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 source ~/.bashrc  # or ~/.zshrc, depending on your shell
@@ -62,6 +63,7 @@ You can start editing the page by modifying `src/app/page.tsx` or other files in
 - `CLOUDFRONT_DOMAIN`: (optional) CloudFront distribution domain.
 - `CLOUDFRONT_KEY_PAIR_ID`: (optional) Key pair ID for signing URLs.
 - `CLOUDFRONT_PRIVATE_KEY_SECRET`: (optional) AWS Secrets Manager secret name containing the private key.
+  The secret may hold the PEM directly or base64 encoded binary.
 
 ## Contributing
 
