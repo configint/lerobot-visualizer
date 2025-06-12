@@ -73,8 +73,20 @@ const SingleDataGraph = React.memo(
     const { currentTime, setCurrentTime } = useTime();
   const chartData = useMemo(() => data, [data]);
   const [dataKeys, setDataKeys] = useState<string[]>([]);
-  const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
   const storageKey = `visibleKeys:${datasetId}`;
+  const [visibleKeys, setVisibleKeys] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          return JSON.parse(saved) as string[];
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
 
   const toggleAll = () => {
     setVisibleKeys((prev) =>
@@ -82,25 +94,12 @@ const SingleDataGraph = React.memo(
     );
   };
 
-    useEffect(() => {
-      if (!data || data.length === 0) return;
-      const keys = Object.keys(data[0]).filter((k) => k !== "timestamp");
-      setDataKeys(keys);
-      const saved =
-        typeof window !== "undefined"
-          ? localStorage.getItem(storageKey)
-          : null;
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved) as string[];
-          setVisibleKeys(parsed.filter((k) => keys.includes(k)));
-        } catch {
-          setVisibleKeys([]);
-        }
-      } else {
-        setVisibleKeys([]);
-      }
-    }, [data, storageKey]);
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+    const keys = Object.keys(data[0]).filter((k) => k !== "timestamp");
+    setDataKeys(keys);
+    setVisibleKeys((prev) => prev.filter((k) => keys.includes(k)));
+  }, [data]);
 
     useEffect(() => {
       if (typeof window === "undefined") return;
@@ -184,17 +183,18 @@ const SingleDataGraph = React.memo(
                     </td>
                     {Array.from({ length: maxIndices }).map((_, idx) => {
                       const key = col.value[idx];
-                      if (!key)
-                        return <td key={idx} className="px-2" />;
+                      if (!key) return <td key={idx} className="px-2" />;
                       const isChecked = visibleKeys.includes(key);
                       return (
                         <td key={idx} className="px-2 text-center">
-                          <input
-                            type="checkbox"
-                            className="size-3.5"
-                            checked={isChecked}
-                            onChange={() => handleCheckboxChange(key)}
-                          />
+                          <label className="flex justify-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="size-3.5"
+                              checked={isChecked}
+                              onChange={() => handleCheckboxChange(key)}
+                            />
+                          </label>
                         </td>
                       );
                     })}
