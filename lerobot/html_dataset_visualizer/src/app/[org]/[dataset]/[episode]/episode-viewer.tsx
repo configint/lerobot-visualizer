@@ -178,8 +178,8 @@ function EpisodeViewerInner({ data }: { data: any }) {
         nextPage={nextPage}
       />
 
-      {/* Fixed header on top right */}
-      <div className="fixed top-0 right-0 flex flex-col items-start p-4 z-20 text-left">
+      {/* Fixed header on top of the charts column */}
+      <div className="fixed top-0 left-[calc(50%+7.5rem)] flex flex-col items-start p-4 z-20 text-left">
         <a
           href="https://github.com/huggingface/lerobot"
           target="_blank"
