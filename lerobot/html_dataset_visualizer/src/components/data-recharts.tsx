@@ -88,6 +88,23 @@ const SingleDataGraph = React.memo(
     return [];
   });
 
+  const colorMap = useMemo(() => {
+    const keys = visibleKeys.length > 0 ? visibleKeys : dataKeys;
+    const map: Record<string, string> = {};
+    keys.forEach((k, i) => {
+      const hue = (i * 360) / keys.length;
+      map[k] = `hsl(${hue}, 100%, 50%)`;
+    });
+    // fallback colors for non-visible keys
+    dataKeys.forEach((k, i) => {
+      if (!(k in map)) {
+        const hue = (i * 360) / dataKeys.length;
+        map[k] = `hsl(${hue}, 100%, 50%)`;
+      }
+    });
+    return map;
+  }, [visibleKeys, dataKeys]);
+
   const toggleAll = () => {
     setVisibleKeys((prev) =>
       prev.length === dataKeys.length ? [] : [...dataKeys],
@@ -177,6 +194,7 @@ const SingleDataGraph = React.memo(
                           className="size-3.5"
                           checked={allChecked}
                           onChange={() => handleColumnToggle(col)}
+                          style={{ accentColor: colorMap[col.value[0]] }}
                         />
                         <span>{col.key}</span>
                       </label>
@@ -193,6 +211,7 @@ const SingleDataGraph = React.memo(
                               className="size-3.5"
                               checked={isChecked}
                               onChange={() => handleCheckboxChange(key)}
+                              style={{ accentColor: colorMap[key] }}
                             />
                           </label>
                         </td>
@@ -265,14 +284,14 @@ const SingleDataGraph = React.memo(
 
               {/* Render lines for visible dataKeys only */}
               {dataKeys.map(
-                (key, index) =>
+                (key) =>
                   visibleKeys.includes(key) && (
                     <Line
                       key={key}
                       type="monotone"
                       dataKey={key}
                       name={key}
-                      stroke={`hsl(${index * (360 / dataKeys.length)}, 100%, 50%)`}
+                      stroke={colorMap[key]}
                       dot={false}
                       activeDot={false}
                       strokeWidth={1.5}
