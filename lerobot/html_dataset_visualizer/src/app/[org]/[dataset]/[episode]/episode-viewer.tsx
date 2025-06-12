@@ -229,8 +229,8 @@ function EpisodeViewerInner({ data }: { data: any }) {
         </div>
 
         {/* Charts column */}
-        <div className="flex w-[50%] flex-col p-4 overflow-y-auto">
-          <div className="mb-4">
+        <div className="flex w-[50%] flex-col p-4 items-center justify-center">
+          <div className="w-full max-w-full">
             <DataRecharts
               data={chartData}
               onChartsReady={() => setChartsReady(true)}
