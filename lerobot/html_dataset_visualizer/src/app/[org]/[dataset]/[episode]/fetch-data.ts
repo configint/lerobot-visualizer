@@ -6,7 +6,7 @@ import {
   readParquetColumn,
 } from "@/utils/parquetUtils";
 import { pick } from "@/utils/pick";
-import { getSignedCloudFrontUrl } from "@/utils/cloudfront";
+import { getSignedUrl } from "@/utils/cloudfront";
 
 const DATASET_URL =
   process.env.DATASET_URL || "https://huggingface.co/datasets";
@@ -21,13 +21,13 @@ export async function getEpisodeData(
   const repoId = `${org}/${dataset}`;
   const keyPrefix = `data-builder/${org}/data/${dataset}`.replace(/\/$/, "");
 
-  const getSignedUrl = async (key: string) => {
-    return getSignedCloudFrontUrl(`${keyPrefix}/${key}`);
+  const sign = async (key: string) => {
+    return getSignedUrl("configint", `${keyPrefix}/${key}`);
   };
 
   try {
     const episode_chunk = Math.floor(0 / 1000);
-    const jsonUrl = await getSignedUrl("meta/info.json");
+    const jsonUrl = await sign("meta/info.json");
 
     const info = await fetchJson<DatasetMetadata>(jsonUrl);
 
@@ -50,7 +50,7 @@ export async function getEpisodeData(
     const episodesLabels: Record<number, string> = {};
     const episodesTasks: Record<number, string[]> = {};
     try {
-      const episodesUrl = await getSignedUrl("meta/episodes.jsonl");
+      const episodesUrl = await sign("meta/episodes.jsonl");
       const text = await (await fetch(episodesUrl)).text();
       const episodesData = text
         .split("\n")
@@ -79,7 +79,7 @@ export async function getEpisodeData(
         });
         return {
           filename: key,
-          url: await getSignedUrl(videoPath),
+          url: await sign(videoPath),
         };
       });
     // videosInfo is now array of promises, resolve them
@@ -132,7 +132,7 @@ export async function getEpisodeData(
       episode_index: episodeId.toString().padStart(6, "0"),
     });
 
-    const parquetUrl = await getSignedUrl(parquetKey);
+    const parquetUrl = await sign(parquetKey);
 
     const arrayBuffer = await fetchParquetFile(parquetUrl);
     const data = await readParquetColumn(arrayBuffer, filteredColumnNames);

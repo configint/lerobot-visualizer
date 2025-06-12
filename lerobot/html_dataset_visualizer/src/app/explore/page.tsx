@@ -8,7 +8,7 @@ import {
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedCloudFrontUrl } from "@/utils/cloudfront";
+import { getSignedUrl } from "@/utils/cloudfront";
 
 // Server component for data fetching
 export default async function ExplorePage({
@@ -87,7 +87,7 @@ export default async function ExplorePage({
 
           // ------- meta/info.json -------
           const infoKey = `${keyPrefix}/meta/info.json`;
-          const infoUrl = await getSignedCloudFrontUrl(infoKey);
+          const infoUrl = await getSignedUrl(bucket, infoKey);
           const info = await fetchJson<DatasetMetadata>(infoUrl);
 
           // Find first video‑type feature
@@ -114,7 +114,7 @@ export default async function ExplorePage({
               );
 
               // Sign and keep URL
-              videoUrl = await getSignedCloudFrontUrl(videoKey);
+              videoUrl = await getSignedUrl(bucket, videoKey);
             } catch {
               /* object missing – leave videoUrl null */
             }
