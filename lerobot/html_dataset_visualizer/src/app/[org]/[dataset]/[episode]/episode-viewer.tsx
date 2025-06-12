@@ -164,6 +164,20 @@ function EpisodeViewerInner({ data }: { data: any }) {
     }
   };
 
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.clientHeight);
+      }
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [tasks]);
+
   return (
     <div className="flex h-screen max-h-screen bg-slate-950 text-gray-200">
       {/* Sidebar */}
@@ -178,8 +192,11 @@ function EpisodeViewerInner({ data }: { data: any }) {
         nextPage={nextPage}
       />
 
-      {/* Fixed header on top of the charts column */}
-      <div className="fixed top-0 left-[calc(50%+7.5rem)] flex flex-col items-start p-4 z-20 text-left">
+      {/* Header above charts */}
+      <div
+        ref={headerRef}
+        className="fixed top-0 left-[calc(50%+7.5rem)] flex flex-col items-start p-4 z-20 text-left bg-slate-950"
+      >
         <a
           href="https://github.com/huggingface/lerobot"
           target="_blank"
@@ -225,7 +242,10 @@ function EpisodeViewerInner({ data }: { data: any }) {
         </div>
 
         {/* Charts column */}
-        <div className="flex w-[50%] flex-col p-4 items-center pt-36 overflow-hidden">
+        <div
+          className="flex w-[50%] flex-col p-4 items-center overflow-hidden"
+          style={{ paddingTop: headerHeight }}
+        >
           <div className="w-full max-w-full flex-1 flex flex-col overflow-hidden">
             <DataRecharts
               data={chartData}
