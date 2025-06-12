@@ -6,8 +6,7 @@ import {
   readParquetColumn,
 } from "@/utils/parquetUtils";
 import { pick } from "@/utils/pick";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { getSignedCloudFrontUrl } from "@/utils/cloudfront";
 
 const DATASET_URL =
   process.env.DATASET_URL || "https://huggingface.co/datasets";
@@ -20,21 +19,14 @@ export async function getEpisodeData(
   episodeId: number,
 ) {
   const repoId = `${org}/${dataset}`;
-  const bucket = "configint";
   const keyPrefix = `data-builder/${org}/data/${dataset}`.replace(/\/$/, "");
-  const s3Client = new S3Client({ region: "us-east-2" });
 
-  const getSignedS3Url = async (key: string) => {
-    const command = new GetObjectCommand({
-      Bucket: bucket,
-      Key: `${keyPrefix}/${key}`,
-    });
-    return getSignedUrl(s3Client, command, { expiresIn: 3600 });
-  };
+  const getSignedUrl = async (key: string) =>
+    getSignedCloudFrontUrl(`${keyPrefix}/${key}`);
 
   try {
     const episode_chunk = Math.floor(0 / 1000);
-    const jsonUrl = await getSignedS3Url("meta/info.json");
+    const jsonUrl = await getSignedUrl("meta/info.json");
 
     const info = await fetchJson<DatasetMetadata>(jsonUrl);
 
@@ -57,7 +49,7 @@ export async function getEpisodeData(
     const episodesLabels: Record<number, string> = {};
     const episodesTasks: Record<number, string[]> = {};
     try {
-      const episodesUrl = await getSignedS3Url("meta/episodes.jsonl");
+      const episodesUrl = await getSignedUrl("meta/episodes.jsonl");
       const text = await (await fetch(episodesUrl)).text();
       const episodesData = text
         .split("\n")
@@ -86,7 +78,7 @@ export async function getEpisodeData(
         });
         return {
           filename: key,
-          url: await getSignedS3Url(videoPath),
+          url: await getSignedUrl(videoPath),
         };
       });
     // videosInfo is now array of promises, resolve them
@@ -139,7 +131,7 @@ export async function getEpisodeData(
       episode_index: episodeId.toString().padStart(6, "0"),
     });
 
-    const parquetUrl = await getSignedS3Url(parquetKey);
+    const parquetUrl = await getSignedUrl(parquetKey);
 
     const arrayBuffer = await fetchParquetFile(parquetUrl);
     const data = await readParquetColumn(arrayBuffer, filteredColumnNames);

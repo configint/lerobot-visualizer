@@ -7,12 +7,7 @@ import {
 } from "@/utils/parquetUtils";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import {
-  S3Client,
-  HeadObjectCommand,
-  GetObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { getSignedCloudFrontUrl } from "@/utils/cloudfront";
 
 // Server component for data fetching
 export default async function ExplorePage({
@@ -79,23 +74,18 @@ export default async function ExplorePage({
   }
 
   // Fetch episode 0 data for each dataset
-  const s3Client = new S3Client({ region: "us-east-2" });
   const datasetWithVideos = (
     await Promise.all(
       datasets.map(async (ds: { id: string; s3_dir: string }) => {
         try {
           const { id, s3_dir } = ds;
-          // Parse S3 URI (e.g. s3://my-bucket/path/to/dataset)
-          const [bucket, ...keyParts] = s3_dir.split("/");
+          // Parse S3 URI like bucket/prefix and keep only key prefix
+          const [, ...keyParts] = s3_dir.split("/");
           const keyPrefix = keyParts.join("/").replace(/\/$/, "");
 
           // ------- meta/info.json -------
           const infoKey = `${keyPrefix}/meta/info.json`;
-          const infoUrl = await getSignedUrl(
-            s3Client,
-            new GetObjectCommand({ Bucket: bucket, Key: infoKey }),
-            { expiresIn: 3600 },
-          );
+          const infoUrl = await getSignedCloudFrontUrl(infoKey);
           const info = await fetchJson<DatasetMetadata>(infoUrl);
 
           // Find first video‑type feature
@@ -114,22 +104,7 @@ export default async function ExplorePage({
               episode_index: "0".padStart(6, "0"),
             });
             const videoKey = `${keyPrefix}/${videoPath}`;
-
-            try {
-              // Check object exists
-              await s3Client.send(
-                new HeadObjectCommand({ Bucket: bucket, Key: videoKey }),
-              );
-
-              // Sign and keep URL
-              videoUrl = await getSignedUrl(
-                s3Client,
-                new GetObjectCommand({ Bucket: bucket, Key: videoKey }),
-                { expiresIn: 3600 },
-              );
-            } catch {
-              /* object missing – leave videoUrl null */
-            }
+            videoUrl = await getSignedCloudFrontUrl(videoKey);
           }
 
           return videoUrl ? { id, videoUrl } : null;

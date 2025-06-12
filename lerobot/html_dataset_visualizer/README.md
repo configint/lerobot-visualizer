@@ -59,6 +59,9 @@ You can start editing the page by modifying `src/app/page.tsx` or other files in
 ### Environment Variables
 
 - `DATASET_URL`: (optional) Base URL for dataset hosting (defaults to HuggingFace Datasets).
+- `CLOUDFRONT_DOMAIN`: (optional) CloudFront distribution domain.
+- `CLOUDFRONT_KEY_PAIR_ID`: (optional) Key pair ID for signing URLs.
+- `CLOUDFRONT_PRIVATE_KEY_SECRET`: (optional) AWS Secrets Manager secret name containing the private key.
 
 ## Contributing
 
