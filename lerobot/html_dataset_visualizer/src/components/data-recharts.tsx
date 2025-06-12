@@ -13,7 +13,7 @@ import {
 } from "recharts";
 
 type DataGraphProps = {
-  data: Array<Array<Record<string, number>>>;
+  data: Array<Record<string, number>>;
   onChartsReady?: () => void;
 };
 
@@ -34,15 +34,11 @@ export const DataRecharts = React.memo(
 
     return (
       <div className="flex flex-col gap-4 overflow-y-auto pr-4">
-        {data.map((group, idx) => (
-          <div key={idx} className="flex-shrink-0 w-full">
-            <SingleDataGraph
-              data={group}
-              hoveredTime={hoveredTime}
-              setHoveredTime={setHoveredTime}
-            />
-          </div>
-        ))}
+        <SingleDataGraph
+          data={data}
+          hoveredTime={hoveredTime}
+          setHoveredTime={setHoveredTime}
+        />
       </div>
     );
   },
@@ -60,16 +56,38 @@ const SingleDataGraph = React.memo(
     setHoveredTime: (t: number | null) => void;
   }) => {
     const { currentTime, setCurrentTime } = useTime();
-    const chartData = useMemo(() => data, [data]);
-    const [dataKeys, setDataKeys] = useState<string[]>([]);
-    const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
+  const chartData = useMemo(() => data, [data]);
+  const [dataKeys, setDataKeys] = useState<string[]>([]);
+  const [visibleKeys, setVisibleKeys] = useState<string[]>([]);
+  const [showLegend, setShowLegend] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("showLegend") === "true";
+  });
 
     useEffect(() => {
       if (!data || data.length === 0) return;
       const keys = Object.keys(data[0]).filter((k) => k !== "timestamp");
       setDataKeys(keys);
-      setVisibleKeys(keys);
+      const saved =
+        typeof window !== "undefined"
+          ? localStorage.getItem("visibleKeys")
+          : null;
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved) as string[];
+          setVisibleKeys(parsed.filter((k) => keys.includes(k)));
+        } catch {
+          setVisibleKeys(keys);
+        }
+      } else {
+        setVisibleKeys(keys);
+      }
     }, [data]);
+
+    useEffect(() => {
+      if (typeof window === "undefined") return;
+      localStorage.setItem("visibleKeys", JSON.stringify(visibleKeys));
+    }, [visibleKeys]);
 
     // Find the closest data point to the current time for highlighting
     const findClosestDataIndex = (time: number) => {
@@ -145,8 +163,24 @@ const SingleDataGraph = React.memo(
     };
 
     return (
-      <div className="flex w-full">
-        <div className="flex-1 h-80" onMouseLeave={handleMouseLeave}>
+      <div className="flex flex-col w-full">
+        <div className="flex justify-end mb-2">
+          <button
+            className="text-xs border border-slate-500 rounded px-2 py-1"
+            onClick={() =>
+              setShowLegend((prev) => {
+                const next = !prev;
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("showLegend", next.toString());
+                }
+                return next;
+              })
+            }
+          >
+            {showLegend ? "Hide Fields" : "Show Fields"}
+          </button>
+        </div>
+        <div className="h-80" onMouseLeave={handleMouseLeave}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
@@ -221,9 +255,11 @@ const SingleDataGraph = React.memo(
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="ml-4">
-          <CustomLegend />
-        </div>
+        {showLegend && (
+          <div className="mt-4">
+            <CustomLegend />
+          </div>
+        )}
       </div>
     );
   },

@@ -166,34 +166,13 @@ export async function getEpisodeData(
       )
       .map(([key]) => key);
 
-    // --- Group columns by their base names ---
-    // Each top-level feature becomes a chart. If a feature has multiple
-    // sub-values (e.g. an array), all of those series are shown on the same
-    // chart.
-    const chartGroups = columns
-      .map(({ value }) =>
-        value.length > 6
-          ? value.reduce<string[][]>((acc, name, idx) => {
-              const groupIdx = Math.floor(idx / 6);
-              if (!acc[groupIdx]) acc[groupIdx] = [];
-              acc[groupIdx].push(name);
-              return acc;
-            }, [])
-          : [value],
-      )
-      .flat();
-
     const duration = chartData[chartData.length - 1].timestamp;
-
-    const chartDataGroups = chartGroups.map((group) =>
-      chartData.map((row) => pick(row, [...group, "timestamp"])),
-    );
 
     return {
       datasetInfo,
       episodeId: episodeId + 1,
       videosInfo: resolvedVideosInfo,
-      chartDataGroups,
+      chartData,
       episodes,
       episodeLabels: episodesLabels,
       tasks: episodesTasks[episodeId + 1] ?? [],
