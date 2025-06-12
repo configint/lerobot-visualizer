@@ -235,6 +235,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
             <DataRecharts
               data={chartData}
               columns={columns}
+              datasetId={datasetInfo.repoId}
               onChartsReady={() => setChartsReady(true)}
             />
 
