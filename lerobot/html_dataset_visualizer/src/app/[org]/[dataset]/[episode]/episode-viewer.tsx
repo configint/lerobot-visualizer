@@ -179,7 +179,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
       />
 
       {/* Fixed header on top right */}
-      <div className="fixed top-0 right-0 flex flex-col items-end p-4 z-20 text-right">
+      <div className="fixed top-0 right-0 flex flex-col items-start p-4 z-20 text-left">
         <a
           href="https://github.com/huggingface/lerobot"
           target="_blank"
