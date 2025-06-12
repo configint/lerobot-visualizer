@@ -202,13 +202,13 @@ function EpisodeViewerInner({ data }: { data: any }) {
                 {episodeLabels[episodeId] &&
                   `: ${episodeLabels[episodeId].replace(`${episodeId}: `, "")}`}
               </p>
-              {tasks?.length > 0 && (
-                <p className="text-lg">
-                  tasks: <span className="font-mono">{tasks.join(", ")}</span>
-                </p>
-              )}
             </div>
           </div>
+          {tasks?.length > 0 && (
+            <p className="text-xl mb-4 ml-32">
+              tasks: <span className="font-mono">{tasks.join(", ")}</span>
+            </p>
+          )}
 
           {videosInfo.length && (
             <VideosPlayer
