@@ -199,6 +199,7 @@ const SingleDataGraph = React.memo(
       );
     };
     return (
+      <div>
         <div className="h-80" onMouseLeave={handleMouseLeave}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
