@@ -63,7 +63,7 @@ You can start editing the page by modifying `src/app/page.tsx` or other files in
 - `CLOUDFRONT_DOMAIN`: (optional) CloudFront distribution domain.
 - `CLOUDFRONT_KEY_PAIR_ID`: (optional) Key pair ID for signing URLs.
 - `CLOUDFRONT_PRIVATE_KEY_SECRET`: (optional) AWS Secrets Manager secret name containing the private key.
-  The secret may hold the PEM directly or base64 encoded binary.
+  The secret may hold the PEM string, a base64‑encoded PEM, or DER binary data.
 - `CLOUDFRONT_PRIVATE_KEY`: (optional) Use this PEM string directly instead of fetching from Secrets Manager.
 
 ## Contributing
