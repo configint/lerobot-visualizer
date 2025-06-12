@@ -15,19 +15,37 @@ let cachedKey: string | null = null;
 
 async function getPrivateKey(): Promise<string> {
   if (!cachedKey) {
-    const resp = await secretsClient.send(
-      new GetSecretValueCommand({ SecretId: secretName }),
-    );
-    if (resp.SecretString) {
-      cachedKey = resp.SecretString;
-    } else if (resp.SecretBinary) {
-      const bytes =
-        resp.SecretBinary instanceof Uint8Array
-          ? Buffer.from(resp.SecretBinary)
-          : Buffer.from(resp.SecretBinary as string, "base64");
-      cachedKey = bytes.toString("utf-8");
+    if (process.env.CLOUDFRONT_PRIVATE_KEY) {
+      cachedKey = process.env.CLOUDFRONT_PRIVATE_KEY;
     } else {
-      throw new Error(`Secret ${secretName} is empty`);
+      const resp = await secretsClient.send(
+        new GetSecretValueCommand({ SecretId: secretName }),
+      );
+      if (resp.SecretString) {
+        cachedKey = resp.SecretString;
+      } else if (resp.SecretBinary) {
+        const bytes =
+          resp.SecretBinary instanceof Uint8Array
+            ? Buffer.from(resp.SecretBinary)
+            : Buffer.from(resp.SecretBinary as string, "base64");
+        cachedKey = bytes.toString("utf-8");
+      } else {
+        throw new Error(`Secret ${secretName} is empty`);
+      }
+    }
+
+    if (cachedKey.includes("\\n")) {
+      cachedKey = cachedKey.replace(/\\n/g, "\n");
+    }
+    if (!cachedKey.includes("BEGIN")) {
+      try {
+        const decoded = Buffer.from(cachedKey, "base64").toString("utf-8");
+        if (decoded.includes("BEGIN")) {
+          cachedKey = decoded;
+        }
+      } catch {
+        /* ignore */
+      }
     }
   }
   return cachedKey;
