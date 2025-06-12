@@ -222,8 +222,6 @@ function EpisodeViewerInner({ data }: { data: any }) {
               onVideosReady={() => setVideosReady(true)}
             />
           )}
-
-          <PlaybackBar />
         </div>
 
         {/* Charts column */}
@@ -245,6 +243,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
               </p>
             )}
           </div>
+          <PlaybackBar />
         </div>
       </div>
     </div>
