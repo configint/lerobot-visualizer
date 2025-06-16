@@ -58,9 +58,20 @@ export async function getEpisodeData(
         .map((line) => JSON.parse(line));
       for (const ep of episodesData) {
         const epNum = Number(ep.episode_index) + 1;
-        const labelPath = Array.isArray(ep.input_key)
-          ? ep.input_key[1].split("/").slice(-5).join("/")
-          : "";
+        let labelPath = "";
+        if (Array.isArray(ep.input_key)) {
+          labelPath = ep.input_key[1]
+            .split("/")
+            .filter(Boolean)
+            .slice(-5)
+            .join("/");
+        } else if (typeof ep.input_key === "string") {
+          labelPath = ep.input_key
+            .split("/")
+            .filter(Boolean)
+            .slice(-5)
+            .join("/");
+        }
         episodesLabels[epNum] = `${epNum}: ${labelPath}`;
         episodesTasks[epNum] = Array.isArray(ep.tasks) ? ep.tasks : [];
       }
