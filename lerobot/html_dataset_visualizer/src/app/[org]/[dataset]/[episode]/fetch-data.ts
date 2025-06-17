@@ -42,8 +42,8 @@ export async function getEpisodeData(
     // Generate list of episodes
     const episodes = Array.from(
       { length: datasetInfo.total_episodes },
-      // episode id starts from 1
-      (_, i) => i + 1,
+      // episode index starts from 0
+      (_, i) => i,
     );
 
     // Fetch episode metadata to build labels and tasks
