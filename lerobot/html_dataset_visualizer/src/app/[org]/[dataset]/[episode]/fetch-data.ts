@@ -57,7 +57,7 @@ export async function getEpisodeData(
         .filter((line) => line.trim().length)
         .map((line) => JSON.parse(line));
       for (const ep of episodesData) {
-        const epNum = Number(ep.episode_index) + 1;
+        const epNum = Number(ep.episode_index);
         let labelPath = "";
         if (Array.isArray(ep.input_key)) {
           labelPath = ep.input_key[1]
@@ -174,13 +174,13 @@ export async function getEpisodeData(
 
     return {
       datasetInfo,
-      episodeId: episodeId + 1,
+      episodeId,
       videosInfo: resolvedVideosInfo,
       chartData,
       columns,
       episodes,
       episodeLabels: episodesLabels,
-      tasks: episodesTasks[episodeId + 1] ?? [],
+      tasks: episodesTasks[episodeId] ?? [],
       ignoredColumns,
       duration,
     };

@@ -19,13 +19,10 @@ export default async function EpisodePage({
 }: {
   params: { org: string; dataset: string; episode: string };
 }) {
-  // episode is like 'episode_1'
+  // episode is like 'episode_0'
   const { org, dataset, episode } = params;
   // fetchData should be updated if needed to support this path pattern
-  let episodeNumber = Number(episode.replace(/^episode_/, ""));
-  if (episodeNumber) {
-    episodeNumber--;
-  }
+  const episodeNumber = Number(episode.replace(/^episode_/, ""));
   const { data, error } = await getEpisodeDataSafe(org, dataset, episodeNumber);
   return <EpisodeViewer data={data} error={error} />;
 }
