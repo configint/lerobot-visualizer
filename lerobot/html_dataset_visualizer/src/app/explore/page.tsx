@@ -64,7 +64,14 @@ export default async function ExplorePage({
         };
       })
       .filter(Boolean) as { id: string; s3_dir: string }[];
-    const allDatasets = [...builderDatasets, ...visualizerDatasets];
+    const allDatasets = [...builderDatasets, ...visualizerDatasets].sort(
+      (a, b) => {
+        const [orgA, nameA = ""] = a.id.split("/");
+        const [orgB, nameB = ""] = b.id.split("/");
+        const orgCompare = orgA.localeCompare(orgB);
+        return orgCompare !== 0 ? orgCompare : nameA.localeCompare(nameB);
+      },
+    );
 
     // Use searchParams from props
     const page = parseInt(searchParams?.p || "1", 10);
