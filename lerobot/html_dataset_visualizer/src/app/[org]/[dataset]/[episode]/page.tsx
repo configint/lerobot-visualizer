@@ -9,8 +9,15 @@ export async function generateMetadata({
   params: { org: string; dataset: string; episode: string };
 }) {
   const { org, dataset, episode } = params;
+  let organization = org;
+  let datasetName = dataset;
+  if (/^\d+(\.\d+)*$/.test(org)) {
+    const tokens = dataset.split("-");
+    organization = tokens[0];
+    datasetName = tokens.slice(1).join("-") || tokens[0];
+  }
   return {
-    title: `${org}/${dataset} | episode ${episode}`,
+    title: `${organization}/${datasetName} | episode ${episode}`,
   };
 }
 
