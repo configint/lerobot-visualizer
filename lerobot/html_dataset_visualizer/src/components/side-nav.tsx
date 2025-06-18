@@ -56,7 +56,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         aria-label="Sidebar navigation"
       >
         <ul>
-          <li>Number of samples/frames: {datasetInfo.total_frames}</li>
+          <li>
+            Dataset duration (hours):{" "}
+            {datasetInfo.total_duration_hours.toFixed(2)}
+          </li>
           <li>Number of episodes: {datasetInfo.total_episodes}</li>
           <li>Frames per second: {datasetInfo.fps}</li>
         </ul>

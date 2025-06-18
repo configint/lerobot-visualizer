@@ -37,6 +37,7 @@ export async function getEpisodeData(
       total_frames: info.total_frames,
       total_episodes: info.total_episodes,
       fps: info.fps,
+      total_duration_hours: info.total_frames / info.fps / 3600,
     };
 
     // Generate list of episodes
