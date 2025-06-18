@@ -18,8 +18,13 @@ export async function getEpisodeData(
   dataset: string,
   episodeId: number,
 ) {
-  const repoId = `${org}/${dataset}`;
-  const keyPrefix = `data-builder/${org}/data/${dataset}`.replace(/\/$/, "");
+  const isVersion = /^\d+(?:\.\d+){2}$/.test(org);
+  const datasetFull = isVersion ? dataset : `${org}-${dataset}`;
+  const tokens = datasetFull.split("-");
+  const organization = tokens[0];
+  const datasetName = tokens.slice(1).join("-") || tokens[0];
+  const repoId = `${organization}/${datasetName}`;
+  const keyPrefix = `data-builder/${isVersion ? org : organization}/data/${datasetFull}`.replace(/\/$/, "");
 
   const sign = async (key: string) => {
     return getSignedUrl("configint", `${keyPrefix}/${key}`);
