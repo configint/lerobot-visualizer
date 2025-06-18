@@ -18,7 +18,14 @@ export async function getEpisodeData(
   dataset: string,
   episodeId: number,
 ) {
-  const repoId = `${org}/${dataset}`;
+  const tokens = dataset.split("-");
+  let organization = org;
+  let datasetName = dataset;
+  if (tokens.length > 1) {
+    organization = tokens[0];
+    datasetName = tokens.slice(1).join("-");
+  }
+  const repoId = `${organization}/${datasetName}`;
   const keyPrefix = `data-builder/${org}/data/${dataset}`.replace(/\/$/, "");
 
   const sign = async (key: string) => {
