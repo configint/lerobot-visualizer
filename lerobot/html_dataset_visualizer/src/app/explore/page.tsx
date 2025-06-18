@@ -32,10 +32,14 @@ export default async function ExplorePage({
     );
 
     const builderDatasets = (scanBuilder.Items || []).map(
-      (item: { version: string; data_name: string }) => ({
-        id: `${item.version}/${item.data_name}`,
-        s3_dir: `configint/data-builder/${item.version}/data/${item.data_name}/`,
-      }),
+      (item: { version: string; data_name: string }) => {
+        const [org, ...datasetParts] = item.data_name.split("-");
+        const datasetName = datasetParts.join("-");
+        return {
+          id: `${org}/${datasetName}`,
+          s3_dir: `configint/data-builder/${item.version}/data/${item.data_name}/`,
+        };
+      },
     );
 
     const scanVisualizer = await docClient.send(
@@ -51,8 +55,11 @@ export default async function ExplorePage({
           /^configint\/data-builder\/(.+)\/data\/(.+)\/$/,
         );
         if (!match) return null;
+        const [, version, dataName] = match;
+        const [org, ...datasetParts] = dataName.split("-");
+        const datasetName = datasetParts.join("-");
         return {
-          id: `${match[1]}/${match[2]}`,
+          id: `${org}/${datasetName}`,
           s3_dir: item.s3_dir,
         };
       })
