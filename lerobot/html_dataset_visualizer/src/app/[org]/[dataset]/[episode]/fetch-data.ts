@@ -26,10 +26,13 @@ export async function getEpisodeData(
   };
 
   try {
-    const episode_chunk = Math.floor(0 / 1000);
     const jsonUrl = await sign("meta/info.json");
 
     const info = await fetchJson<DatasetMetadata>(jsonUrl);
+
+    const episode_chunk = Math.floor(
+      episodeId / (info.chunks_size ?? 1000),
+    );
 
     // Dataset information
     const datasetInfo = {
