@@ -65,6 +65,10 @@ class LeRobotDataset(torch.utils.data.Dataset):
         self.info = load_info(repo_id, version, root)
         if self.video:
             self.videos_dir = load_videos(repo_id, version, root)
+        # Pre-compute the number of episodes once as this can be expensive for
+        # large datasets. Avoid calling `unique` on each access which slows
+        # down the website when thousands of episodes are present.
+        self._num_episodes = len(self.hf_dataset.unique("episode_index"))
 
     @property
     def fps(self) -> int:
@@ -113,7 +117,7 @@ class LeRobotDataset(torch.utils.data.Dataset):
     @property
     def num_episodes(self) -> int:
         """Number of episodes."""
-        return len(self.hf_dataset.unique("episode_index"))
+        return self._num_episodes
 
     @property
     def tolerance_s(self) -> float:
