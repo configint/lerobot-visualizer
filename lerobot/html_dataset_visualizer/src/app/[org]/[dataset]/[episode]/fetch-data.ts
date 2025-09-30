@@ -22,7 +22,7 @@ export async function getEpisodeData(
   const keyPrefix = `data-builder/${org}/data/${dataset}`.replace(/\/$/, "");
 
   const sign = async (key: string) => {
-    return getSignedUrl("configint", `${keyPrefix}/${key}`);
+    return getSignedUrl("configint-main", `${keyPrefix}/${key}`);
   };
 
   try {

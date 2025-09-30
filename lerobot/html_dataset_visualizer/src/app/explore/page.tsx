@@ -21,7 +21,7 @@ export default async function ExplorePage({
   let totalPages = 1;
   try {
     // --- Fetch dataset list from DynamoDB (both data-builder and lerobot-visualizer) ---
-    const ddbClient = new DynamoDBClient({ region: "us-east-2" });
+    const ddbClient = new DynamoDBClient({ region: "us-west-2" });
     const docClient = DynamoDBDocumentClient.from(ddbClient);
 
     const scanBuilder = await docClient.send(
@@ -34,7 +34,7 @@ export default async function ExplorePage({
     const builderDatasets = (scanBuilder.Items || []).map(
       (item: { version: string; data_name: string }) => ({
         id: `${item.version}/${item.data_name}`,
-        s3_dir: `configint/data-builder/${item.version}/data/${item.data_name}/`,
+        s3_dir: `configint-main/data-builder/${item.version}/data/${item.data_name}/`,
       }),
     );
 
@@ -48,7 +48,7 @@ export default async function ExplorePage({
     const visualizerDatasets = (scanVisualizer.Items || [])
       .map((item: { s3_dir: string }) => {
         const match = item.s3_dir.match(
-          /^configint\/data-builder\/(.+)\/data\/(.+)\/$/,
+          /^configint-main\/data-builder\/(.+)\/data\/(.+)\/$/,
         );
         if (!match) return null;
         return {
@@ -75,7 +75,7 @@ export default async function ExplorePage({
   }
 
   // Fetch episode 0 data for each dataset
-  const s3Client = new S3Client({ region: "us-east-2" });
+  const s3Client = new S3Client({ region: "us-west-2" });
   const datasetWithVideos = (
     await Promise.all(
       datasets.map(async (ds: { id: string; s3_dir: string }) => {
