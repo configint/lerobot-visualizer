@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import os
 import boto3
 
-def get_private_key_from_secrets_manager(secret_name: str, region_name: str = "us-east-2") -> bytes:
+def get_private_key_from_secrets_manager(secret_name: str, region_name: str = "us-west-2") -> bytes:
     client = boto3.client("secretsmanager", region_name=region_name)
     response = client.get_secret_value(SecretId=secret_name)
     return response["SecretString"].encode("utf-8")

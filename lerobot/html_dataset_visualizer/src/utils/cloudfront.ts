@@ -9,7 +9,7 @@ import { getSignedUrl as s3GetSignedUrl } from "@aws-sdk/s3-request-presigner";
 let cachedKey: string | null = null;
 let s3Client: S3Client | null = null;
 
-async function getPrivateKey(secretName: string, region = "us-east-2") {
+async function getPrivateKey(secretName: string, region = "us-west-2") {
   if (cachedKey) return cachedKey;
   const client = new SecretsManagerClient({ region });
   const command = new GetSecretValueCommand({ SecretId: secretName });
@@ -34,7 +34,7 @@ export async function getSignedUrl(bucket: string, key: string) {
   }
 
   if (!s3Client) {
-    s3Client = new S3Client({ region: "us-east-2" });
+    s3Client = new S3Client({ region: "us-west-2" });
   }
   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
   return s3GetSignedUrl(s3Client, command, { expiresIn: 3600 });
