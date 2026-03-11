@@ -7,6 +7,7 @@ import {
 } from "@/utils/parquetUtils";
 import { pick } from "@/utils/pick";
 import { getSignedUrl } from "@/utils/cloudfront";
+import { SubtaskSegment } from "@/types/subtask";
 
 const DATASET_URL =
   process.env.DATASET_URL || "https://huggingface.co/datasets";
@@ -81,6 +82,23 @@ export async function getEpisodeData(
       }
     } catch (err) {
       console.warn("Failed to fetch episodes.jsonl", err);
+    }
+
+    // Fetch subtask metadata
+    const subtasksMap: Record<number, string> = {};
+    try {
+      const subtasksUrl = await sign("meta/subtasks.jsonl");
+      const subtasksText = await (await fetch(subtasksUrl)).text();
+      const subtasksData = subtasksText
+        .split("\n")
+        .filter((line) => line.trim().length)
+        .map((line) => JSON.parse(line));
+      for (const st of subtasksData) {
+        const idx = Number(st.task_index);
+        subtasksMap[idx] = st.task ?? `Subtask ${idx}`;
+      }
+    } catch (err) {
+      console.warn("Failed to fetch subtasks.jsonl (may not exist)", err);
     }
 
     // Videos information
@@ -176,6 +194,44 @@ export async function getEpisodeData(
 
     const duration = chartData[chartData.length - 1].timestamp;
 
+    // Compute subtask segments from parquet low_level_task_index
+    let subtaskSegments: SubtaskSegment[] = [];
+    if (Object.keys(subtasksMap).length > 0) {
+      try {
+        const subtaskFrames = await readParquetColumn(arrayBuffer, [
+          "timestamp",
+          "low_level_task_index",
+        ]);
+        if (subtaskFrames.length > 0) {
+          let currentIndex = Number(subtaskFrames[0][1]);
+          let segmentStart = Number(subtaskFrames[0][0]);
+
+          for (let i = 1; i < subtaskFrames.length; i++) {
+            const frameIndex = Number(subtaskFrames[i][1]);
+            if (frameIndex !== currentIndex) {
+              subtaskSegments.push({
+                subtaskIndex: currentIndex,
+                text: subtasksMap[currentIndex] ?? `Subtask ${currentIndex}`,
+                startTime: segmentStart,
+                endTime: Number(subtaskFrames[i][0]),
+              });
+              currentIndex = frameIndex;
+              segmentStart = Number(subtaskFrames[i][0]);
+            }
+          }
+          // Close the last segment
+          subtaskSegments.push({
+            subtaskIndex: currentIndex,
+            text: subtasksMap[currentIndex] ?? `Subtask ${currentIndex}`,
+            startTime: segmentStart,
+            endTime: duration,
+          });
+        }
+      } catch (err) {
+        console.warn("Failed to read low_level_task_index from parquet", err);
+      }
+    }
+
     return {
       datasetInfo,
       episodeId,
@@ -185,6 +241,7 @@ export async function getEpisodeData(
       episodes,
       episodeLabels: episodesLabels,
       tasks: episodesTasks[episodeId] ?? [],
+      subtaskSegments,
       ignoredColumns,
       duration,
     };
