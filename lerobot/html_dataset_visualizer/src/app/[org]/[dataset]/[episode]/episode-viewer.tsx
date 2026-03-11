@@ -8,6 +8,7 @@ import DataRecharts from "@/components/data-recharts";
 import PlaybackBar from "@/components/playback-bar";
 import { TimeProvider, useTime } from "@/context/time-context";
 import Sidebar from "@/components/side-nav";
+import SubtaskTimeline from "@/components/subtask-timeline";
 import Loading from "@/components/loading-component";
 
 export default function EpisodeViewer({
@@ -44,6 +45,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
     episodes,
     episodeLabels,
     tasks,
+    subtaskSegments,
     ignoredColumns,
   } = data;
 
@@ -53,6 +55,21 @@ function EpisodeViewerInner({ data }: { data: any }) {
   const [videosReady, setVideosReady] = useState(!videosInfo.length);
   const [chartsReady, setChartsReady] = useState(false);
   const isLoading = !videosReady || !chartsReady;
+
+  // Dynamic header height tracking
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(176); // default ~pt-44
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setHeaderHeight(entry.contentRect.height + 32); // +32 for padding
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -179,18 +196,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
       />
 
       {/* Fixed header on top of the charts column */}
-      <div className="fixed top-0 left-[calc(50%+7.5rem)] flex flex-col items-start p-4 z-20 text-left">
-        <a
-          href="https://github.com/huggingface/lerobot"
-          target="_blank"
-          className="block"
-        >
-          <img
-            src="https://github.com/huggingface/lerobot/raw/main/media/lerobot-logo-thumbnail.png"
-            alt="LeRobot Logo"
-            className="w-24"
-          />
-        </a>
+      <div ref={headerRef} className="fixed top-0 left-[calc(50%+7.5rem)] right-0 flex flex-col items-start p-4 z-20 text-left bg-slate-950">
         <a
           href={`https://huggingface.co/datasets/${datasetInfo.repoId}`}
           target="_blank"
@@ -202,9 +208,14 @@ function EpisodeViewerInner({ data }: { data: any }) {
           {episodeLabelPath && `: ${episodeLabelPath}`}
         </p>
         {tasks?.length > 0 && (
-          <p className="text-lg mt-2">
-            tasks: <span className="font-mono">{tasks.join(', ')}</span>
+          <p className="text-lg mt-1">
+            task: <span className="font-mono">{tasks.join(', ')}</span>
           </p>
+        )}
+        {subtaskSegments?.length > 0 && (
+          <div className="w-full mt-2 pr-4">
+            <SubtaskTimeline segments={subtaskSegments} duration={data.duration} />
+          </div>
         )}
       </div>
 
@@ -225,7 +236,7 @@ function EpisodeViewerInner({ data }: { data: any }) {
         </div>
 
         {/* Charts column */}
-        <div className="flex w-[50%] flex-col p-4 items-center pt-36 overflow-hidden">
+        <div className="flex w-[50%] flex-col p-4 items-center overflow-hidden" style={{ paddingTop: headerHeight }}>
           <div className="w-full max-w-full flex-1 flex flex-col overflow-hidden">
             <DataRecharts
               data={chartData}
